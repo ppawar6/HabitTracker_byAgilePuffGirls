@@ -1,6 +1,6 @@
 # Habit Tracker
 
-![CI](https://github.com/yashashri2409/SW-555-Agile-Puff-Girls/workflows/CI/badge.svg)
+![CI](https://github.com/yashashri2409/SW-555-Agile-Puff-Girls/actions/workflows/ci.yml/badge.svg)
 
 ## Project Description
 
@@ -8,29 +8,29 @@ Our Habit Tracker app helps individuals build and maintain positive daily habits
 
 ## Core Features
 
-* **User Authentication:** Secure login and signup system for each user.  
-* **Add Habits:** Create personalized habits and define daily or weekly schedules.  
-* **Habit Categories:** Group habits under different categories (e.g., Health, Study, Fitness).  
-* **Mark as Complete:** Mark habits as completed to maintain streaks and track consistency.  
-* **Archive Habits:** Remove or archive inactive habits without deleting progress data.  
-* **Progress Tracking:** Visualize completion rates and daily achievements.  
+* **User Authentication:** Secure login and signup system for each user.
+* **Add Habits:** Create personalized habits and define daily or weekly schedules.
+* **Habit Categories:** Group habits under different categories (e.g., Health, Study, Fitness).
+* **Mark as Complete:** Mark habits as completed to maintain streaks and track consistency.
+* **Archive Habits:** Remove or archive inactive habits without deleting progress data.
+* **Progress Tracking:** Visualize completion rates and daily achievements.
 * **User-Friendly Interface:** Simple, responsive design for an easy and motivating user experience.
 
 ---
 
 ## The Team
 
-**Team Name:** Agilepuff Girls  
+**Team Name:** Agilepuff Girls
 
-* Yashashri Urade  
-* Samruddhi Sonare  
-* Pratiksha Pawar  
-* Sandhya Gottimukkala  
-* Tanaya Kaul  
+* Yashashri Urade
+* Samruddhi Sonare
+* Pratiksha Pawar
+* Sandhya Gottimukkala
+* Tanaya Kaul
 
-**Communication Mode:** Hybrid  
-- **In-Person Meeting:** Wednesday, 5:00 PM – 6:00 PM  
-- **Teams Meeting:** Saturday, 9:00 PM – 10:00 PM  
+**Communication Mode:** Hybrid
+- **In-Person Meeting:** Wednesday, 5:00 PM – 6:00 PM
+- **Teams Meeting:** Saturday, 9:00 PM – 10:00 PM
 
 ---
 
@@ -38,13 +38,13 @@ Our Habit Tracker app helps individuals build and maintain positive daily habits
 
 This project is built using the **Python-based Flask web framework**, leveraging modern tools and libraries to ensure scalability, maintainability, and performance.
 
-* **Backend:** Flask, SQLAlchemy  
-* **Database:** SQLite  
-* **Frontend:** Jinja2 (Templating), Tailwind CSS  
-* **Package Management:** uv  
-* **Testing:** Pytest  
-* **CI/CD:** GitHub Actions  
-* **Version Control:** Git & GitHub  
+* **Backend:** Flask, SQLAlchemy
+* **Database:** SQLite
+* **Frontend:** Jinja2 (Templating), Tailwind CSS
+* **Package Management:** uv
+* **Testing:** Pytest
+* **CI/CD:** GitHub Actions
+* **Version Control:** Git & GitHub
 
 ---
 
@@ -54,7 +54,7 @@ Follow these steps to set up and run the Habit Tracker locally:
 
 ### Prerequisites
 
-* Python 3.9+  
+* Python 3.9+
 * [uv](https://github.com/astral-sh/uv) – Python package manager
 
 ### Installation & Setup
@@ -87,12 +87,12 @@ Follow these steps to set up and run the Habit Tracker locally:
 
 ## Project Board
 
-All user stories, sprint tasks, and progress tracking are managed on our Trello board:  
+All user stories, sprint tasks, and progress tracking are managed on our Trello board:
 🔗 [Habit Tracker Project Board](https://trello.com/b/IBAY34Iv/habit-tracker)
 
 ---
 
 ## License
 
-Distributed under the **MIT License**.  
+Distributed under the **MIT License**.
 See the `LICENSE` file for more information.
