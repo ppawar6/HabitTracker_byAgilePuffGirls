@@ -13,19 +13,22 @@
     </script>
     <style>
         :root {
+            /* Light theme default values */
             --bg-primary: #ffffff;
             --bg-secondary: #f3f4f6;
             --text-primary: #111827;
             --text-secondary: #4b5563;
             --border-color: #e5e7eb;
+            --modal-overlay: rgba(0, 0, 0, 0.5);
         }
-        
+
         [data-theme="dark"] {
             --bg-primary: #1f2937;
             --bg-secondary: #111827;
             --text-primary: #f9fafb;
             --text-secondary: #d1d5db;
             --border-color: #374151;
+            --modal-overlay: rgba(0, 0, 0, 0.7);
         }
 
         body { 
@@ -33,6 +36,16 @@
             background-color: var(--bg-primary);
             color: var(--text-primary);
             transition: background-color 0.3s, color 0.3s;
+        }
+
+        .modal {
+            background-color: var(--modal-overlay);
+        }
+
+        .modal-content {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
         }
 
         /* Dark mode form elements */
@@ -169,6 +182,101 @@
         </div>
     </main>
 
+    <!-- Tips Modal -->
+    <div id="tipsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden" role="dialog" aria-modal="true" tabindex="0" aria-labelledby="tips-modal-title">
+        <div class="min-h-screen px-4 text-center">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span class="inline-block h-screen align-middle" aria-hidden="true">&#8203;</span>
+            <div class="inline-block w-full max-w-2xl p-6 my-8 text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 id="tips-modal-title" class="text-2xl font-bold text-gray-900">Welcome to Habit Tracker! 🌟</h3>
+                    <button type="button" onclick="closeTipsModal()" class="text-gray-400 hover:text-gray-500">
+                        <span class="sr-only">Close</span>
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="space-y-6">
+                    <div class="relative bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 p-4 rounded-lg overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent"></div>
+                        <div class="relative">
+                            <h4 class="text-lg font-semibold text-purple-800 dark:text-purple-300 mb-2 flex items-center gap-2">
+                                <span class="flex-shrink-0">1. Create Your First Habit</span>
+                                <span class="text-2xl">📝</span>
+                            </h4>
+                            <p class="text-purple-700 dark:text-purple-200">Start by clicking "Plant a New Habit" and give it a meaningful name and description.</p>
+                        </div>
+                    </div>
+                    <div class="relative bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 p-4 rounded-lg overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent"></div>
+                        <div class="relative">
+                            <h4 class="text-lg font-semibold text-blue-800 dark:text-blue-300 mb-2 flex items-center gap-2">
+                                <span class="flex-shrink-0">2. Track Daily Progress</span>
+                                <span class="text-2xl">✅</span>
+                            </h4>
+                            <p class="text-blue-700 dark:text-blue-200">Click the circle next to your habit to mark it as complete for the day.</p>
+                        </div>
+                    </div>
+                    <div class="relative bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 p-4 rounded-lg overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent"></div>
+                        <div class="relative">
+                            <h4 class="text-lg font-semibold text-green-800 dark:text-green-300 mb-2 flex items-center gap-2">
+                                <span class="flex-shrink-0">3. Build Streaks</span>
+                                <span class="text-2xl">🔥</span>
+                            </h4>
+                            <p class="text-green-700 dark:text-green-200">Keep your streak going by completing your habits consistently.</p>
+                        </div>
+                    </div>
+                    <div class="relative bg-gradient-to-r from-yellow-50 to-yellow-100 dark:from-yellow-900/40 dark:to-yellow-800/40 p-4 rounded-lg overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-r from-yellow-500/20 dark:from-yellow-400/20 to-transparent"></div>
+                        <div class="relative">
+                            <h4 class="text-lg font-bold text-red-900 dark:text-yellow-300 mb-2 flex items-center gap-2">
+                                <span class="flex-shrink-0 tracking-wide">4. Manage Your Habits</span>
+                                <span class="text-2xl">⚙️</span>
+                            </h4>
+                            <p class="text-yellow-700 dark:text-yellow-100">Need a break? Use pause/resume. Want to remove old habits? Archive them!</p>
+                            <div class="mt-4 flex gap-2 text-sm">
+                                <span class="inline-flex items-center px-3 py-1.5 rounded-full bg-yellow-100 dark:bg-yellow-600 text-yellow-800 dark:text-yellow-50 border border-yellow-200 dark:border-yellow-500 shadow-sm font-medium">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    Pause
+                                </span>
+                                <span class="inline-flex items-center px-3 py-1.5 rounded-full bg-blue-100 dark:bg-blue-600 text-blue-800 dark:text-blue-50 border border-blue-200 dark:border-blue-500 shadow-sm font-medium">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                                    </svg>
+                                    Archive
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-sm text-center">
+                        <div class="inline-flex items-center justify-center w-8 h-8 bg-purple-100 dark:bg-purple-900/50 rounded-full mb-2">
+                            <span class="text-lg">💡</span>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-300">You can always access these tips later by clicking "Show Tips" in the footer.</p>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" onclick="closeTipsModal()" 
+                        class="px-4 py-2 text-sm font-bold text-black dark:text-black bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 dark:focus:ring-purple-400 shadow-sm border border-gray-300 dark:border-gray-600">
+                        Got it!
+                    </button>
+                    <form action="{{ url_for('disable_tips') }}" method="POST" class="inline">
+                        <button type="submit"
+                            class="px-4 py-2 text-sm font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 focus:outline-none focus:underline">
+                            Don't show again
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <footer class="bg-theme-primary border-t border-theme mt-auto transition-colors duration-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div class="flex flex-col md:flex-row justify-between items-center">
@@ -177,6 +285,11 @@
                     <a href="https://github.com" class="text-gray-400 hover:text-gray-500">
                         <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
                     </a>
+                    {% if session.get('authenticated') %}
+                    <button onclick="showTipsModal()" class="text-purple-600 hover:text-purple-700">
+                        <span class="text-sm">Show Tips</span>
+                    </button>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -216,6 +329,22 @@
             document.getElementById('darkModeToggle').checked = theme === 'dark';
             localStorage.setItem('theme', theme);
         }
+
+        function showTipsModal() {
+            const modal = document.getElementById('tipsModal');
+            modal.classList.remove('hidden');
+        }
+
+        function closeTipsModal() {
+            const modal = document.getElementById('tipsModal');
+            modal.classList.add('hidden');
+        }
+
+        {% if show_tips %}
+            document.addEventListener('DOMContentLoaded', function() {
+                showTipsModal();
+            });
+        {% endif %}
 
         // Dark mode toggle with error handling and revert on failure
         async function toggleDarkMode() {

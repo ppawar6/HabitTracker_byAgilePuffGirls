@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 
 from extensions import db
-from models import Habit
+from models import Habit, UserPreferences
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "dev-secret-key-change-in-production"
@@ -135,7 +135,9 @@ def habit_tracker():
 
 @app.route("/habit-tracker/delete/<int:habit_id>", methods=["POST"])
 def delete_habit(habit_id):
-    habit = Habit.query.get_or_404(habit_id)
+    habit = db.session.get(Habit, habit_id)
+    if not habit:
+        return "Habit not found", 404
     db.session.delete(habit)
     db.session.commit()
     return redirect(url_for("habit_tracker"))
@@ -147,9 +149,10 @@ def update_habit(habit_id):
     if not session.get("authenticated"):
         return redirect(url_for("signin"))
 
-    habit = Habit.query.get_or_404(habit_id)
+    habit = db.session.get(Habit, habit_id)
+    if not habit:
+        return "Habit not found", 404
     new_name = request.form.get("name", "").strip()
-
     if new_name:
         habit.name = new_name
         db.session.commit()
@@ -231,6 +234,31 @@ def archived_habits():
     return render_template(
         "apps/habit_tracker/archived.html", page_id="habit-tracker", habits=habits
     )
+
+
+@app.route("/tips/disable", methods=["POST"])
+def disable_tips():
+    """Disable tips for authenticated users"""
+    if session.get("authenticated"):
+        email = session.get("email")
+        prefs = db.session.get(UserPreferences, email)
+        if not prefs:
+            prefs = UserPreferences(id=email)
+            db.session.add(prefs)
+        prefs.has_seen_tutorial = True
+        db.session.commit()
+    return redirect(request.referrer or url_for("habit_tracker"))
+
+
+@app.context_processor
+def inject_show_tips():
+    """Inject show_tips variable into all templates"""
+    show_tips = False
+    if session.get("authenticated"):
+        email = session.get("email")
+        prefs = db.session.get(UserPreferences, email)
+        show_tips = not (prefs and prefs.has_seen_tutorial)
+    return dict(show_tips=show_tips)
 
 
 @app.route("/logout")

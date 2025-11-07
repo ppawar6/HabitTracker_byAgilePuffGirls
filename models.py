@@ -3,11 +3,11 @@ from datetime import datetime, timezone
 from extensions import db
 
 
-class ThemePreference(db.Model):
-    """Model for storing user theme preferences."""
-
+class UserPreferences(db.Model):
+    """Store user preferences including onboarding status and theme preferences"""
     id = db.Column(db.String(100), primary_key=True)  # Store email as ID
-    preference = db.Column(db.String(10), default="light")  # 'light' or 'dark'
+    has_seen_tutorial = db.Column(db.Boolean, default=False)
+    theme = db.Column(db.String(10), default="light")  # 'light' or 'dark'
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 

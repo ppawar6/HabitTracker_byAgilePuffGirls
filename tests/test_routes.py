@@ -4,7 +4,7 @@ from datetime import datetime
 import pytest
 
 from app import db, otp_store
-from models import Habit
+from models import Habit, UserPreferences
 
 # === Habit Tracker Tests ===
 
@@ -797,10 +797,10 @@ def test_theme_preference_for_authenticated_user(logged_in_client, app):
     assert response.json["success"] is True
 
     with app.app_context():
-        from models import ThemePreference
-        pref = ThemePreference.query.filter_by(id="test@example.com").first()
+        from models import UserPreferences
+        pref = UserPreferences.query.filter_by(id="test@example.com").first()
         assert pref is not None
-        assert pref.preference == "dark"
+        assert pref.theme == "dark"
 
 
 @pytest.mark.parametrize("endpoint", ["/habit-tracker", "/theme/settings"])
@@ -808,3 +808,57 @@ def test_all_modules_get_returns_ok(logged_in_client, endpoint):
     """Test that all module endpoints return 200 status code on GET requests when authenticated."""
     response = logged_in_client.get(endpoint)
     assert response.status_code == 200
+
+
+# === Tips/Tutorial Tests ===
+
+def test_new_user_sees_tips(client, app):
+    """Test that new users see the tips modal."""
+    # Login a new user
+    email = "new_user@example.com"
+    with client.session_transaction() as sess:
+        sess["authenticated"] = True
+        sess["email"] = email
+
+    # Access habit tracker
+    response = client.get("/habit-tracker")
+    html = response.data.decode("utf-8")
+
+    # Assert tips modal is shown
+    assert 'id="tipsModal"' in html
+    assert "Welcome to Habit Tracker!" in html
+    assert not db.session.get(UserPreferences, email)
+
+
+def test_returning_user_no_tips(client, app):
+    """Test that returning users don't see tips if they've disabled them."""
+    # Setup a user who has seen the tutorial
+    email = "returning@example.com"
+    with app.app_context():
+        prefs = UserPreferences(id=email, has_seen_tutorial=True)
+        db.session.add(prefs)
+        db.session.commit()
+
+    # Login the user
+    with client.session_transaction() as sess:
+        sess["authenticated"] = True
+        sess["email"] = email
+
+    # Check that tips are not automatically shown
+    response = client.get("/habit-tracker")
+    html = response.data.decode("utf-8")
+    # The tips modal should not be automatically shown for returning users
+    assert 'document.addEventListener(\'DOMContentLoaded\', function() { showTipsModal(); })' not in html
+
+
+def test_disable_tips_endpoint(logged_in_client, app):
+    """Test that POST /tips/disable works correctly."""
+    email = "test@example.com"
+
+    response = logged_in_client.post("/tips/disable", follow_redirects=True)
+    assert response.status_code == 200
+
+    with app.app_context():
+        prefs = db.session.get(UserPreferences, email)
+        assert prefs is not None
+        assert prefs.has_seen_tutorial is True

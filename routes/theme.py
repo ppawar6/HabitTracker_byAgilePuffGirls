@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request, session
 
 from extensions import db
-from models import ThemePreference
+from models import UserPreferences
 
 theme_bp = Blueprint("theme", __name__, url_prefix="/theme")
 
@@ -16,10 +16,10 @@ def theme_settings():
         # If authenticated, try to get from database
         if session.get("authenticated"):
             email = session.get("email")
-            theme = ThemePreference.query.filter_by(id=email).first()
-            print(f"[DEBUG] /settings - DB theme for {email}: {getattr(theme, 'preference', None)}")
-            if theme:
-                theme_preference = theme.preference
+            preferences = UserPreferences.query.filter_by(id=email).first()
+            print(f"[DEBUG] /settings - DB theme for {email}: {getattr(preferences, 'theme', None)}")
+            if preferences:
+                theme_preference = preferences.theme
                 # Cache in session
                 session["theme"] = theme_preference
     print(f"[DEBUG] /settings - returning: {theme_preference or 'light'}")
@@ -40,12 +40,12 @@ def toggle_theme():
     # If user is authenticated, store in database
     if session.get("authenticated"):
         email = session.get("email")
-        preference = ThemePreference.query.filter_by(id=email).first()
-        if preference:
-            preference.preference = theme
+        preferences = UserPreferences.query.filter_by(id=email).first()
+        if preferences:
+            preferences.theme = theme
         else:
-            preference = ThemePreference(id=email, preference=theme)
-            db.session.add(preference)
+            preferences = UserPreferences(id=email, theme=theme)
+            db.session.add(preferences)
         db.session.commit()
         print(f"[DEBUG] /toggle - DB theme for {email} set to: {theme}")
     return jsonify({"success": True, "theme": theme})
