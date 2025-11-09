@@ -131,16 +131,16 @@ def habit_tracker():
     habits = Habit.query.filter_by(is_archived=False, is_paused=False).all()
 
     if sort_by == 'az':
-        
+
         habits = sorted(habits, key=lambda h: h.name.lower())
     elif sort_by == 'za':
-        
+
         habits = sorted(habits, key=lambda h: h.name.lower(), reverse=True)
     elif sort_by == 'oldest':
-        
+
         habits = sorted(habits, key=lambda h: h.created_at)
-    else:  
-    
+    else:
+
         habits = sorted(habits, key=lambda h: h.created_at, reverse=True)
 
     paused_habits = (
@@ -155,7 +155,7 @@ def habit_tracker():
         habits=habits,
         paused_habits=paused_habits,
         categories=CATEGORIES,
-        current_sort=sort_by, 
+        current_sort=sort_by,
     )
 
 
