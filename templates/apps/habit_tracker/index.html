@@ -4,7 +4,7 @@
 
 {% block extra_head %}
 <style>
-    /* Dark mode adaptations */
+
     [data-theme="dark"] select,
     [data-theme="dark"] input,
     [data-theme="dark"] textarea {
@@ -252,6 +252,21 @@
             <div class="flex items-center gap-3">
                 {% if habits %}
                 <span class="text-sm text-gray-500">{{ habits|length }} habit{{ 's' if habits|length != 1 else '' }}</span>
+
+                
+                <div class="relative">
+                    <select id="sortSelect" onchange="window.location.href='?sort=' + this.value"
+                        class="text-sm px-3 py-1.5 border border-gray-200 rounded-lg bg-white hover:border-purple-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 cursor-pointer appearance-none pr-8">
+                        <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Sort: Newest First</option>
+                        <option value="oldest" {% if current_sort == 'oldest' %}selected{% endif %}>Sort: Oldest First</option>
+                        <option value="az" {% if current_sort == 'az' %}selected{% endif %}>Sort: A-Z</option>
+                        <option value="za" {% if current_sort == 'za' %}selected{% endif %}>Sort: Z-A</option>
+                    </select>
+                    <svg class="w-4 h-4 absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </div>
+                
                 {% endif %}
 
                 <a href="/habit-tracker/archived" class="text-sm text-purple-600 hover:text-purple-700 underline font-medium">

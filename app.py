@@ -111,13 +111,25 @@ def habit_tracker():
 
         return redirect(url_for("habit_tracker"))
 
+
+    sort_by = request.args.get('sort', 'newest')
+
     # Get active habits (not archived and not paused)
-    habits = (
-        Habit.query.filter_by(is_archived=False, is_paused=False)
-        .order_by(Habit.created_at.desc())
-        .all()
-    )
-    # Get paused habits (not archived but paused)
+    habits = Habit.query.filter_by(is_archived=False, is_paused=False).all()
+
+    if sort_by == 'az':
+        
+        habits = sorted(habits, key=lambda h: h.name.lower())
+    elif sort_by == 'za':
+        
+        habits = sorted(habits, key=lambda h: h.name.lower(), reverse=True)
+    elif sort_by == 'oldest':
+        
+        habits = sorted(habits, key=lambda h: h.created_at)
+    else:  
+    
+        habits = sorted(habits, key=lambda h: h.created_at, reverse=True)
+
     paused_habits = (
         Habit.query.filter_by(is_archived=False, is_paused=True)
         .order_by(Habit.paused_at.desc())
@@ -130,6 +142,7 @@ def habit_tracker():
         habits=habits,
         paused_habits=paused_habits,
         categories=CATEGORIES,
+        current_sort=sort_by, 
     )
 
 
