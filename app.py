@@ -26,10 +26,12 @@ def from_json_filter(value):
         return []
 
 from routes.habits import habits_bp  # noqa: E402
+from routes.notifications import create_notification, notifications_bp  # noqa: E402
 from routes.theme import theme_bp  # noqa: E402
 
 app.register_blueprint(theme_bp)
 app.register_blueprint(habits_bp)
+app.register_blueprint(notifications_bp)
 
 # Store OTPs temporarily
 otp_store = {}
@@ -107,6 +109,17 @@ def habit_tracker():
                 category=(category or None),
             )
             db.session.add(habit)
+
+            # Create notification BEFORE commit
+            email = session.get("email")
+            if email:
+                create_notification(
+                    user_email=email,
+                    message=f"Added habit: {name}",
+                    action_type="added",
+                    habit_name=name
+                )
+
             db.session.commit()
 
         return redirect(url_for("habit_tracker"))
@@ -138,7 +151,20 @@ def delete_habit(habit_id):
     habit = db.session.get(Habit, habit_id)
     if not habit:
         return "Habit not found", 404
+
+    habit_name = habit.name
     db.session.delete(habit)
+
+    # Create notification BEFORE commit
+    email = session.get("email")
+    if email:
+        create_notification(
+            user_email=email,
+            message=f"Deleted habit: {habit_name}",
+            action_type="deleted",
+            habit_name=habit_name
+        )
+
     db.session.commit()
     return redirect(url_for("habit_tracker"))
 
@@ -152,9 +178,22 @@ def update_habit(habit_id):
     habit = db.session.get(Habit, habit_id)
     if not habit:
         return "Habit not found", 404
+
+    old_name = habit.name
     new_name = request.form.get("name", "").strip()
     if new_name:
         habit.name = new_name
+
+        # Create notification BEFORE commit
+        email = session.get("email")
+        if email:
+            create_notification(
+                user_email=email,
+                message=f"Edited habit: '{old_name}' to '{new_name}'",
+                action_type="edited",
+                habit_name=new_name
+            )
+
         db.session.commit()
 
     return redirect(url_for("habit_tracker"))
@@ -172,6 +211,17 @@ def archive_habit(habit_id):
 
     habit.is_archived = True
     habit.archived_at = datetime.now(timezone.utc)
+
+    # Create notification BEFORE commit
+    email = session.get("email")
+    if email:
+        create_notification(
+            user_email=email,
+            message=f"Archived habit: {habit.name}",
+            action_type="archived",
+            habit_name=habit.name
+        )
+
     db.session.commit()
     return redirect(url_for("habit_tracker"))
 
@@ -188,6 +238,17 @@ def unarchive_habit(habit_id):
 
     habit.is_archived = False
     habit.archived_at = None
+
+    # Create notification BEFORE commit
+    email = session.get("email")
+    if email:
+        create_notification(
+            user_email=email,
+            message=f"Unarchived habit: {habit.name}",
+            action_type="unarchived",
+            habit_name=habit.name
+        )
+
     db.session.commit()
     return redirect(request.referrer or url_for("habit_tracker"))
 
@@ -204,6 +265,17 @@ def pause_habit(habit_id):
 
     habit.is_paused = True
     habit.paused_at = datetime.now(timezone.utc)
+
+    # Create notification BEFORE commit
+    email = session.get("email")
+    if email:
+        create_notification(
+            user_email=email,
+            message=f"Paused habit: {habit.name}",
+            action_type="paused",
+            habit_name=habit.name
+        )
+
     db.session.commit()
     return redirect(url_for("habit_tracker"))
 
@@ -220,6 +292,17 @@ def resume_habit(habit_id):
 
     habit.is_paused = False
     habit.paused_at = None
+
+    # Create notification BEFORE commit
+    email = session.get("email")
+    if email:
+        create_notification(
+            user_email=email,
+            message=f"Resumed habit: {habit.name}",
+            action_type="resumed",
+            habit_name=habit.name
+        )
+
     db.session.commit()
     return redirect(request.referrer or url_for("habit_tracker"))
 
