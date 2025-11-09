@@ -754,6 +754,122 @@ def test_share_progress_requires_authentication(client):
     assert response.status_code == 302
     assert response.location == '/signin'
 
+
+# Sort Habits Tests
+
+
+def test_sort_parameter_default_newest(logged_in_client, app):
+    """Test that default sorting is newest first."""
+    with app.app_context():
+        from datetime import datetime, timedelta
+
+        habit1 = Habit(
+            name="Oldest Habit",
+            description="First",
+            created_at=datetime.utcnow() - timedelta(days=2),
+        )
+        habit2 = Habit(name="Newest Habit", description="Last", created_at=datetime.utcnow())
+        db.session.add_all([habit1, habit2])
+        db.session.commit()
+
+    response = logged_in_client.get("/habit-tracker")
+    html = response.data.decode("utf-8")
+
+    assert response.status_code == 200
+    newest_pos = html.find("Newest Habit")
+    oldest_pos = html.find("Oldest Habit")
+    assert newest_pos < oldest_pos
+
+
+def test_sort_parameter_oldest(logged_in_client, app):
+    """Test that sorting by oldest works correctly."""
+    with app.app_context():
+        from datetime import datetime, timedelta
+
+        habit1 = Habit(
+            name="Oldest Habit",
+            description="First",
+            created_at=datetime.utcnow() - timedelta(days=2),
+        )
+        habit2 = Habit(name="Newest Habit", description="Last", created_at=datetime.utcnow())
+        db.session.add_all([habit1, habit2])
+        db.session.commit()
+
+    response = logged_in_client.get("/habit-tracker?sort=oldest")
+    html = response.data.decode("utf-8")
+
+    assert response.status_code == 200
+    oldest_pos = html.find("Oldest Habit")
+    newest_pos = html.find("Newest Habit")
+    assert oldest_pos < newest_pos
+
+
+def test_sort_parameter_az(logged_in_client, app):
+    """Test that sorting alphabetically A-Z works."""
+    with app.app_context():
+        habit1 = Habit(name="Zebra Habit", description="Last alphabetically")
+        habit2 = Habit(name="Apple Habit", description="First alphabetically")
+        db.session.add_all([habit1, habit2])
+        db.session.commit()
+
+    response = logged_in_client.get("/habit-tracker?sort=az")
+    html = response.data.decode("utf-8")
+
+    assert response.status_code == 200
+    apple_pos = html.find("Apple Habit")
+    zebra_pos = html.find("Zebra Habit")
+    assert apple_pos < zebra_pos
+
+
+def test_sort_parameter_za(logged_in_client, app):
+    """Test that sorting alphabetically Z-A works."""
+    with app.app_context():
+        habit1 = Habit(name="Zebra Habit", description="Last in reverse")
+        habit2 = Habit(name="Apple Habit", description="First in reverse")
+        db.session.add_all([habit1, habit2])
+        db.session.commit()
+
+    response = logged_in_client.get("/habit-tracker?sort=za")
+    html = response.data.decode("utf-8")
+
+    assert response.status_code == 200
+    zebra_pos = html.find("Zebra Habit")
+    apple_pos = html.find("Apple Habit")
+    assert zebra_pos < apple_pos
+
+
+def test_sort_dropdown_shows_current_selection(logged_in_client, app):
+    """Test that the sort dropdown shows the currently selected option."""
+    with app.app_context():
+        habit = Habit(name="Test Habit", description="Test")
+        db.session.add(habit)
+        db.session.commit()
+
+    response = logged_in_client.get("/habit-tracker?sort=az")
+    html = response.data.decode("utf-8")
+
+    assert response.status_code == 200
+    assert 'value="az"' in html
+    assert "selected" in html
+
+
+def test_sort_dropdown_visible_with_habits(logged_in_client, app):
+    """Test that the sort dropdown appears when user has habits."""
+    with app.app_context():
+        habit = Habit(name="Morning Run", description="Daily run")
+        db.session.add(habit)
+        db.session.commit()
+
+    response = logged_in_client.get("/habit-tracker")
+    html = response.data.decode("utf-8")
+
+    assert response.status_code == 200
+    assert 'id="sortSelect"' in html
+    assert "Sort: Newest First" in html
+    assert "Sort: A-Z" in html
+
+
+
 # === Parametrized Tests ===
 
 
