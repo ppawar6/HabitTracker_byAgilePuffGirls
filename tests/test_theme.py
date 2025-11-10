@@ -1,6 +1,5 @@
 """Test theme functionality."""
 
-
 from models import UserPreferences
 
 
