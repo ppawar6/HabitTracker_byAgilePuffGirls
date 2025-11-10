@@ -273,6 +273,35 @@ def inject_show_tips():
         show_tips = not (prefs and prefs.has_seen_tutorial)
     return dict(show_tips=show_tips)
 
+@app.context_processor
+def inject_now():
+    return {'now': datetime.now}
+
+@app.route("/habit-tracker/complete/<int:habit_id>", methods=["POST"])
+def complete_habit(habit_id):
+    """Mark a habit as completed for today"""
+    if not session.get("authenticated"):
+        return redirect(url_for("signin"))
+
+    habit = Habit.query.get_or_404(habit_id)
+
+    # Load previous completion dates
+    completed_dates = []
+    if habit.completed_dates:
+        try:
+            completed_dates = json.loads(habit.completed_dates)
+        except json.JSONDecodeError:
+            completed_dates = []
+
+    # Add today’s date if not already present
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    if today not in completed_dates:
+        completed_dates.append(today)
+
+    habit.completed_dates = json.dumps(completed_dates)
+    db.session.commit()
+
+    return redirect(url_for("habit_tracker"))
 
 @app.route("/logout")
 def logout():

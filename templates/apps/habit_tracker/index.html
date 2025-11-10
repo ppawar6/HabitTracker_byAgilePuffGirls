@@ -281,16 +281,19 @@
                 <div class="group p-4 rounded-lg border border-gray-100 hover:border-purple-200 hover:bg-gradient-to-r hover:from-purple-50 hover:to-indigo-50 transition-all duration-200">
                     <div class="flex items-start justify-between mb-2">
                         <div class="flex items-center gap-2 flex-1">
-                            <form method="POST" action="/habit-tracker/toggle/{{ habit.id }}" class="inline">
-                                <button type="submit" class="text-purple-600 hover:text-purple-800 transition-colors">
-                                    {% set today = habit.completed_dates|default('[]')|from_json %}
-                                    {% if today|string in today %}
-                                        <span class="text-2xl">✓</span>
-                                    {% else %}
-                                        <span class="text-2xl opacity-30">○</span>
-                                    {% endif %}
-                                </button>
-                            </form>
+                            
+                           <!-- Mark habit complete button -->
+<form method="POST" action="/habit-tracker/complete/{{ habit.id }}" class="inline">
+    <button type="submit" class="text-purple-600 hover:text-purple-800 transition-colors">
+        {% set today = habit.completed_dates|default('[]')|from_json %}
+        {% if now().strftime('%Y-%m-%d') in today %}
+            <span class="text-2xl">✓</span>
+        {% else %}
+            <span class="text-2xl opacity-30">○</span>
+        {% endif %}
+    </button>
+</form>
+
                             <span class="font-medium text-gray-900 group-hover:text-purple-700 habit-name-display-{{ habit.id }}">{{ habit.name }}</span>
                             <form method="POST" action="/habit-tracker/update/{{ habit.id }}" class="hidden habit-edit-form-{{ habit.id }} flex-1">
                                 <input type="text" name="name" value="{{ habit.name }}"
