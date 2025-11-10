@@ -38,7 +38,7 @@ def test_toggle_completion_removes_completed_date(logged_in_client, app):
         habit = Habit(
             name="Evening Reading",
             description="Read for 30 minutes",
-            completed_dates=json.dumps([today])
+            completed_dates=json.dumps([today]),
         )
         db.session.add(habit)
         db.session.commit()

@@ -1,7 +1,6 @@
 """Test logout button UI functionality in settings modal."""
 
 
-
 def test_logout_button_exists_in_settings_modal(logged_in_client):
     """Test that logout button is present in the settings modal."""
     # Act
@@ -11,7 +10,7 @@ def test_logout_button_exists_in_settings_modal(logged_in_client):
     assert response.status_code == 200
     assert b"Logout" in response.data or b"logout" in response.data
     # Check for logout button/link in settings
-    assert b'href="/logout"' in response.data or b"onclick=\"handleLogout()\"" in response.data
+    assert b'href="/logout"' in response.data or b'onclick="handleLogout()"' in response.data
 
 
 def test_logout_button_has_proper_styling(logged_in_client):
@@ -21,12 +20,12 @@ def test_logout_button_has_proper_styling(logged_in_client):
 
     # Assert
     assert response.status_code == 200
-    content = response.data.decode('utf-8')
+    content = response.data.decode("utf-8")
 
     # Check for theme-aware classes
-    assert 'text-theme-primary' in content or 'text-red-600' in content
+    assert "text-theme-primary" in content or "text-red-600" in content
     # Logout should be visible in settings modal
-    assert 'settingsModal' in content
+    assert "settingsModal" in content
 
 
 def test_logout_button_accessible_when_authenticated(logged_in_client):
@@ -57,13 +56,13 @@ def test_settings_modal_structure(logged_in_client):
 
     # Assert
     assert response.status_code == 200
-    content = response.data.decode('utf-8')
+    content = response.data.decode("utf-8")
 
     # Settings modal should exist
     assert 'id="settingsModal"' in content
     # Dark mode toggle should exist
-    assert 'Dark Mode' in content
-    assert 'Toggle dark theme' in content
+    assert "Dark Mode" in content
+    assert "Toggle dark theme" in content
     # Logout button should exist
-    assert 'Logout' in content
-    assert 'End your session securely' in content
+    assert "Logout" in content
+    assert "End your session securely" in content
