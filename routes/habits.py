@@ -8,6 +8,7 @@ from models import Habit
 
 habits_bp = Blueprint("habits", __name__, url_prefix="/habit-tracker")
 
+
 @habits_bp.route("/toggle/<int:habit_id>", methods=["POST"])
 def toggle_completion(habit_id):
     """Toggle habit completion for today"""

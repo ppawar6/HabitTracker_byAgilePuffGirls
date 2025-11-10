@@ -17,7 +17,9 @@ def theme_settings():
         if session.get("authenticated"):
             email = session.get("email")
             preferences = UserPreferences.query.filter_by(id=email).first()
-            print(f"[DEBUG] /settings - DB theme for {email}: {getattr(preferences, 'theme', None)}")
+            print(
+                f"[DEBUG] /settings - DB theme for {email}: {getattr(preferences, 'theme', None)}"
+            )
             if preferences:
                 theme_preference = preferences.theme
                 # Cache in session
