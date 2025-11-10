@@ -157,6 +157,18 @@
                     </a>
                 </div>
                 <div class="flex items-center gap-4">
+                    <!-- Notification Bell Icon -->
+                    <button onclick="toggleNotifications()" 
+                            class="p-2 rounded-lg bg-theme-secondary hover:opacity-80 transition-colors relative" 
+                            title="Notifications"
+                            id="notificationBell">
+                        <svg class="w-6 h-6 text-theme-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                        </svg>
+                        <!-- Notification Count Badge -->
+                        <span id="notificationCount" class="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+                    </button>
+                    
                     <button onclick="openSettings()" 
                             class="p-2 rounded-lg bg-theme-secondary hover:opacity-80 transition-colors" 
                             title="Settings">
@@ -295,6 +307,31 @@
         </div>
     </footer>
 
+    <!-- Notification Panel -->
+    <div id="notificationPanel" class="settings-modal">
+        <div class="settings-content shadow-xl max-h-[80vh] overflow-hidden flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-theme-primary">Notifications</h3>
+                <button onclick="closeNotifications()" class="text-theme-secondary hover:text-theme-primary">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="flex justify-between items-center mb-4">
+                <p class="text-sm text-theme-secondary">Your habit activity updates</p>
+                <button onclick="markAllAsRead()" class="text-xs text-blue-600 hover:text-blue-700 font-medium">
+                    Mark all as read
+                </button>
+            </div>
+            
+            <div id="notificationList" class="space-y-2 overflow-y-auto flex-1 pr-2">
+                <p class="text-sm text-theme-secondary text-center py-4">Loading notifications...</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Settings Modal -->
     <div id="settingsModal" class="settings-modal">
         <div class="settings-content shadow-xl">
@@ -315,6 +352,19 @@
                     </div>
                     <label class="toggle-switch">
                         <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="border-t border-theme pt-6"></div>
+
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="font-medium text-theme-primary">Push Notifications</h4>
+                        <p class="text-sm text-theme-secondary">Get notified when you add, edit, delete, pause, or archive habits</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="notificationsToggle" onchange="toggleNotificationsEnabled()">
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
@@ -402,6 +452,7 @@
         function openSettings() {
             document.getElementById('settingsModal').classList.add('active');
             loadThemePreference(); // Sync theme state
+            loadNotificationPreference(); // Sync notification state
         }
 
         function closeSettings() {
@@ -413,8 +464,206 @@
             if (e.target === this) closeSettings();
         });
 
+        // Notification management
+        let notificationsData = [];
+
+        async function loadNotifications() {
+            try {
+                const response = await fetch('/notifications');
+                if (!response.ok) return;
+                
+                const data = await response.json();
+                notificationsData = data.notifications;
+                updateNotificationUI(data.notifications, data.unread_count);
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+            }
+        }
+
+        function updateNotificationUI(notifications, unreadCount) {
+            // Update badge count
+            const badge = document.getElementById('notificationCount');
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            // Update notification list
+            const listContainer = document.getElementById('notificationList');
+            if (notifications.length === 0) {
+                listContainer.innerHTML = '<p class="text-sm text-center py-8 text-gray-600 dark:text-gray-400">No notifications yet</p>';
+                return;
+            }
+
+            // Check if dark mode is active
+            const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+            
+            listContainer.innerHTML = notifications.map(notif => {
+                const date = new Date(notif.created_at);
+                const timeAgo = getTimeAgo(date);
+                const isUnread = !notif.is_read;
+                
+                // Choose colors based on theme and read status
+                let bgColor, borderColor, textColor, timeColor;
+                if (isDarkMode) {
+                    if (isUnread) {
+                        bgColor = 'bg-blue-900/30';
+                        borderColor = 'border-blue-700';
+                        textColor = 'text-white';
+                        timeColor = 'text-gray-300';
+                    } else {
+                        bgColor = 'bg-gray-700';
+                        borderColor = 'border-gray-600';
+                        textColor = 'text-gray-100';
+                        timeColor = 'text-gray-400';
+                    }
+                } else {
+                    if (isUnread) {
+                        bgColor = 'bg-blue-50';
+                        borderColor = 'border-blue-300';
+                        textColor = 'text-gray-900';
+                        timeColor = 'text-gray-600';
+                    } else {
+                        bgColor = 'bg-white';
+                        borderColor = 'border-gray-200';
+                        textColor = 'text-gray-800';
+                        timeColor = 'text-gray-500';
+                    }
+                }
+                
+                return `
+                    <div class="p-3 rounded-lg ${bgColor} border-2 ${borderColor} hover:opacity-90 transition-all cursor-pointer"
+                         onclick="markNotificationAsRead(${notif.id})">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-lg">${getActionIcon(notif.action_type)}</span>
+                                    ${isUnread ? '<span class="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></span>' : ''}
+                                </div>
+                                <p class="text-sm font-semibold break-words ${textColor}">${notif.message}</p>
+                                <p class="text-xs mt-1 ${timeColor}">${timeAgo}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getActionIcon(actionType) {
+            const icons = {
+                'added': '➕',
+                'deleted': '🗑️',
+                'paused': '⏸️',
+                'resumed': '▶️',
+                'archived': '📦',
+                'unarchived': '📤',
+                'edited': '✏️'
+            };
+            return icons[actionType] || '📌';
+        }
+
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            
+            if (seconds < 60) return 'Just now';
+            if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+            if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+            if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+            return date.toLocaleDateString();
+        }
+
+        function toggleNotifications() {
+            const panel = document.getElementById('notificationPanel');
+            if (panel.classList.contains('active')) {
+                closeNotifications();
+            } else {
+                panel.classList.add('active');
+                loadNotifications();
+            }
+        }
+
+        function closeNotifications() {
+            document.getElementById('notificationPanel').classList.remove('active');
+        }
+
+        async function markNotificationAsRead(notificationId) {
+            try {
+                await fetch(`/notifications/${notificationId}/read`, { method: 'POST' });
+                loadNotifications(); // Refresh
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+            }
+        }
+
+        async function markAllAsRead() {
+            try {
+                await fetch('/notifications/read-all', { method: 'POST' });
+                loadNotifications(); // Refresh
+            } catch (error) {
+                console.error('Error marking all notifications as read:', error);
+            }
+        }
+
+        async function toggleNotificationsEnabled() {
+            const checkbox = document.getElementById('notificationsToggle');
+            const originalState = checkbox.checked;
+            
+            try {
+                const response = await fetch('/notifications/toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    checkbox.checked = data.notifications_enabled;
+                    console.log('Notifications toggled:', data.notifications_enabled);
+                } else {
+                    console.error('Failed to toggle notifications');
+                    checkbox.checked = originalState; // Revert to original
+                }
+            } catch (error) {
+                console.error('Error toggling notifications:', error);
+                checkbox.checked = originalState; // Revert to original
+            }
+        }
+
+        async function loadNotificationPreference() {
+            try {
+                const response = await fetch('/notifications/settings');
+                if (response.ok) {
+                    const data = await response.json();
+                    const checkbox = document.getElementById('notificationsToggle');
+                    checkbox.checked = data.notifications_enabled;
+                    console.log('Loaded notification preference:', data.notifications_enabled);
+                } else {
+                    console.error('Failed to load notification preference');
+                }
+            } catch (error) {
+                console.error('Error loading notification preference:', error);
+                // Default to true if there's an error
+                document.getElementById('notificationsToggle').checked = true;
+            }
+        }
+
+        // Close notification panel when clicking outside
+        document.getElementById('notificationPanel').addEventListener('click', function(e) {
+            if (e.target === this) closeNotifications();
+        });
+
         // Initialize theme
         loadThemePreference();
+
+        // Load notifications on page load if authenticated
+        {% if session.get('authenticated') %}
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNotifications();
+            // Refresh notification count every 30 seconds
+            setInterval(loadNotifications, 30000);
+        });
+        {% endif %}
 
         // Keep theme in sync across tabs
         document.addEventListener('visibilitychange', () => {
