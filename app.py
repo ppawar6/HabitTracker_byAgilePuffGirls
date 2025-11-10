@@ -15,8 +15,9 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
 
+
 # Add custom Jinja filters
-@app.template_filter('from_json')
+@app.template_filter("from_json")
 def from_json_filter(value):
     if value is None:
         return []
@@ -24,6 +25,7 @@ def from_json_filter(value):
         return json.loads(value)
     except json.JSONDecodeError:
         return []
+
 
 from routes.habits import habits_bp  # noqa: E402
 from routes.notifications import create_notification, notifications_bp  # noqa: E402
@@ -97,10 +99,10 @@ def habit_tracker():
     if request.method == "POST":
         name = request.form.get("name", "").strip()
         description = request.form.get("description", "").strip()
-        category = request.form.get('category', '').strip()
+        category = request.form.get("category", "").strip()
 
-        if category == 'other':
-            category = request.form.get('category_custom', '').strip()
+        if category == "other":
+            category = request.form.get("category_custom", "").strip()
 
         if name:
             habit = Habit(
@@ -117,30 +119,25 @@ def habit_tracker():
                     user_email=email,
                     message=f"Added habit: {name}",
                     action_type="added",
-                    habit_name=name
+                    habit_name=name,
                 )
 
             db.session.commit()
 
         return redirect(url_for("habit_tracker"))
 
-
-    sort_by = request.args.get('sort', 'newest')
+    sort_by = request.args.get("sort", "newest")
 
     # Get active habits (not archived and not paused)
     habits = Habit.query.filter_by(is_archived=False, is_paused=False).all()
 
-    if sort_by == 'az':
-
+    if sort_by == "az":
         habits = sorted(habits, key=lambda h: h.name.lower())
-    elif sort_by == 'za':
-
+    elif sort_by == "za":
         habits = sorted(habits, key=lambda h: h.name.lower(), reverse=True)
-    elif sort_by == 'oldest':
-
+    elif sort_by == "oldest":
         habits = sorted(habits, key=lambda h: h.created_at)
     else:
-
         habits = sorted(habits, key=lambda h: h.created_at, reverse=True)
 
     paused_habits = (
@@ -175,7 +172,7 @@ def delete_habit(habit_id):
             user_email=email,
             message=f"Deleted habit: {habit_name}",
             action_type="deleted",
-            habit_name=habit_name
+            habit_name=habit_name,
         )
 
     db.session.commit()
@@ -204,7 +201,7 @@ def update_habit(habit_id):
                 user_email=email,
                 message=f"Edited habit: '{old_name}' to '{new_name}'",
                 action_type="edited",
-                habit_name=new_name
+                habit_name=new_name,
             )
 
         db.session.commit()
@@ -232,7 +229,7 @@ def archive_habit(habit_id):
             user_email=email,
             message=f"Archived habit: {habit.name}",
             action_type="archived",
-            habit_name=habit.name
+            habit_name=habit.name,
         )
 
     db.session.commit()
@@ -259,7 +256,7 @@ def unarchive_habit(habit_id):
             user_email=email,
             message=f"Unarchived habit: {habit.name}",
             action_type="unarchived",
-            habit_name=habit.name
+            habit_name=habit.name,
         )
 
     db.session.commit()
@@ -286,7 +283,7 @@ def pause_habit(habit_id):
             user_email=email,
             message=f"Paused habit: {habit.name}",
             action_type="paused",
-            habit_name=habit.name
+            habit_name=habit.name,
         )
 
     db.session.commit()
@@ -313,7 +310,7 @@ def resume_habit(habit_id):
             user_email=email,
             message=f"Resumed habit: {habit.name}",
             action_type="resumed",
-            habit_name=habit.name
+            habit_name=habit.name,
         )
 
     db.session.commit()
@@ -329,6 +326,50 @@ def archived_habits():
     habits = Habit.query.filter_by(is_archived=True).order_by(Habit.archived_at.desc()).all()
     return render_template(
         "apps/habit_tracker/archived.html", page_id="habit-tracker", habits=habits
+    )
+
+
+@app.route("/habit-tracker/stats")
+def habit_stats():
+    """View habit statistics dashboard"""
+    if not session.get("authenticated"):
+        return redirect(url_for("signin"))
+
+    # Get all habits
+    all_habits = Habit.query.all()
+
+    # Calculate basic statistics
+    total_habits = len(all_habits)
+    active_habits = len([h for h in all_habits if not h.is_archived and not h.is_paused])
+    paused_habits = len([h for h in all_habits if h.is_paused and not h.is_archived])
+    archived_habits = len([h for h in all_habits if h.is_archived])
+
+    # Calculate habits by category
+    category_counts = {}
+    for habit in all_habits:
+        category = habit.category or "Uncategorized"
+        category_counts[category] = category_counts.get(category, 0) + 1
+
+    # Sort categories by count (descending)
+    sorted_categories = sorted(category_counts.items(), key=lambda x: x[1], reverse=True)
+
+    # Find most recent and oldest habit
+    most_recent = None
+    oldest = None
+    if all_habits:
+        most_recent = max(all_habits, key=lambda h: h.created_at)
+        oldest = min(all_habits, key=lambda h: h.created_at)
+
+    return render_template(
+        "apps/habit_tracker/stats.html",
+        page_id="habit-tracker",
+        total_habits=total_habits,
+        active_habits=active_habits,
+        paused_habits=paused_habits,
+        archived_habits=archived_habits,
+        category_counts=sorted_categories,
+        most_recent=most_recent,
+        oldest=oldest,
     )
 
 

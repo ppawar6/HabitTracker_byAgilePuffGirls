@@ -62,21 +62,21 @@ def test_get_notifications_returns_all_user_notifications(logged_in_client, app)
             message="Added habit: Morning Exercise",
             action_type="added",
             habit_name="Morning Exercise",
-            is_read=False
+            is_read=False,
         )
         notif2 = Notification(
             user_email="test@example.com",
             message="Paused habit: Evening Reading",
             action_type="paused",
             habit_name="Evening Reading",
-            is_read=True
+            is_read=True,
         )
         notif3 = Notification(
             user_email="other@example.com",
             message="Should not appear",
             action_type="added",
             habit_name="Other Habit",
-            is_read=False
+            is_read=False,
         )
         db.session.add_all([notif1, notif2, notif3])
         db.session.commit()
@@ -101,19 +101,19 @@ def test_get_notifications_returns_unread_count(logged_in_client, app):
             user_email="test@example.com",
             message="Notification 1",
             action_type="added",
-            is_read=False
+            is_read=False,
         )
         notif2 = Notification(
             user_email="test@example.com",
             message="Notification 2",
             action_type="deleted",
-            is_read=False
+            is_read=False,
         )
         notif3 = Notification(
             user_email="test@example.com",
             message="Notification 3",
             action_type="edited",
-            is_read=True
+            is_read=True,
         )
         db.session.add_all([notif1, notif2, notif3])
         db.session.commit()
@@ -135,7 +135,7 @@ def test_mark_notification_as_read(logged_in_client, app):
             user_email="test@example.com",
             message="Test notification",
             action_type="added",
-            is_read=False
+            is_read=False,
         )
         db.session.add(notif)
         db.session.commit()
@@ -159,19 +159,19 @@ def test_mark_all_notifications_as_read(logged_in_client, app):
             user_email="test@example.com",
             message="Notification 1",
             action_type="added",
-            is_read=False
+            is_read=False,
         )
         notif2 = Notification(
             user_email="test@example.com",
             message="Notification 2",
             action_type="deleted",
-            is_read=False
+            is_read=False,
         )
         notif3 = Notification(
             user_email="other@example.com",
             message="Other user notification",
             action_type="edited",
-            is_read=False
+            is_read=False,
         )
         db.session.add_all([notif1, notif2, notif3])
         db.session.commit()
@@ -217,7 +217,7 @@ def test_add_habit_creates_notification_when_enabled(logged_in_client, app):
     response = logged_in_client.post(
         "/habit-tracker",
         data={"name": "New Habit", "description": "Test", "category": "Health"},
-        follow_redirects=False
+        follow_redirects=False,
     )
 
     # Assert
@@ -241,7 +241,7 @@ def test_add_habit_no_notification_when_disabled(logged_in_client, app):
     response = logged_in_client.post(
         "/habit-tracker",
         data={"name": "New Habit", "description": "Test", "category": "Health"},
-        follow_redirects=False
+        follow_redirects=False,
     )
 
     # Assert
@@ -269,8 +269,7 @@ def test_delete_habit_creates_notification(logged_in_client, app):
     assert response.status_code == 302
     with app.app_context():
         notifications = Notification.query.filter_by(
-            user_email="test@example.com",
-            action_type="deleted"
+            user_email="test@example.com", action_type="deleted"
         ).all()
         assert len(notifications) == 1
         assert "Habit to Delete" in notifications[0].message
@@ -294,8 +293,7 @@ def test_pause_habit_creates_notification(logged_in_client, app):
     assert response.status_code == 302
     with app.app_context():
         notifications = Notification.query.filter_by(
-            user_email="test@example.com",
-            action_type="paused"
+            user_email="test@example.com", action_type="paused"
         ).all()
         assert len(notifications) == 1
         assert "Habit to Pause" in notifications[0].message
@@ -319,8 +317,7 @@ def test_archive_habit_creates_notification(logged_in_client, app):
     assert response.status_code == 302
     with app.app_context():
         notifications = Notification.query.filter_by(
-            user_email="test@example.com",
-            action_type="archived"
+            user_email="test@example.com", action_type="archived"
         ).all()
         assert len(notifications) == 1
         assert "Habit to Archive" in notifications[0].message
@@ -339,17 +336,14 @@ def test_update_habit_creates_notification(logged_in_client, app):
 
     # Act
     response = logged_in_client.post(
-        f"/habit-tracker/update/{habit_id}",
-        data={"name": "New Name"},
-        follow_redirects=False
+        f"/habit-tracker/update/{habit_id}", data={"name": "New Name"}, follow_redirects=False
     )
 
     # Assert
     assert response.status_code == 302
     with app.app_context():
         notifications = Notification.query.filter_by(
-            user_email="test@example.com",
-            action_type="edited"
+            user_email="test@example.com", action_type="edited"
         ).all()
         assert len(notifications) == 1
         assert "Old Name" in notifications[0].message
@@ -374,8 +368,7 @@ def test_resume_habit_creates_notification(logged_in_client, app):
     assert response.status_code == 302
     with app.app_context():
         notifications = Notification.query.filter_by(
-            user_email="test@example.com",
-            action_type="resumed"
+            user_email="test@example.com", action_type="resumed"
         ).all()
         assert len(notifications) == 1
         assert "Paused Habit" in notifications[0].message
@@ -399,8 +392,7 @@ def test_unarchive_habit_creates_notification(logged_in_client, app):
     assert response.status_code == 302
     with app.app_context():
         notifications = Notification.query.filter_by(
-            user_email="test@example.com",
-            action_type="unarchived"
+            user_email="test@example.com", action_type="unarchived"
         ).all()
         assert len(notifications) == 1
         assert "Archived Habit" in notifications[0].message
