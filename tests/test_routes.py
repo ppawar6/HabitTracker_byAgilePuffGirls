@@ -582,7 +582,7 @@ def test_paused_habit_independent_of_archive(logged_in_client, app):
 
 
 def test_toggle_completion_marks_habit_completed(logged_in_client, app):
-    """Test that POST /habit-tracker/toggle/<id> marks a habit as completed for today."""
+    """Test that toggling a habit marks it as completed for the current day."""
     # Arrange
     with app.app_context():
         habit = Habit(name="Morning Exercise", description="Daily workout")
@@ -626,7 +626,7 @@ def test_toggle_completion_removes_completed_date(logged_in_client, app):
     with app.app_context():
         updated_habit = Habit.query.get(habit_id)
         completed_dates = json.loads(updated_habit.completed_dates)
-        assert today not in completed_dates
+        assert today not in completed_dates, "Today's date should be marked as completed"
 
 
 def test_toggle_completion_requires_auth(client, app):

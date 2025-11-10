@@ -1,9 +1,12 @@
 {% extends "base.html" %}
 
+
 {% block title %}Habit Tracker • Student Starter Pack{% endblock %}
+
 
 {% block extra_head %}
 <style>
+
 
     [data-theme="dark"] select,
     [data-theme="dark"] input,
@@ -12,25 +15,28 @@
         color: var(--text-primary);
         border-color: var(--border-color);
     }
-    
+   
     [data-theme="dark"] select option {
         background-color: var(--bg-primary);
         color: var(--text-primary);
     }
 
+
     [data-theme="dark"] .bg-white {
         background-color: var(--bg-primary);
     }
-    
+   
     [data-theme="dark"] .border-gray-100 {
         border-color: var(--border-color);
     }
+
 
     [data-theme="dark"] .text-gray-900,
     [data-theme="dark"] .modal-content .text-gray-900,
     [data-theme="dark"] .text-gray-700 {
         color: var(--text-primary);
     }
+
 
     [data-theme="dark"] .text-gray-600,
     [data-theme="dark"] .text-gray-500,
@@ -39,64 +45,77 @@
         color: var(--text-secondary);
     }
 
+
     [data-theme="dark"] .text-xs.text-gray-500.bg-white {
         background-color: var(--bg-secondary);
         color: var(--text-secondary);
     }
+
 
     [data-theme="dark"] #shareText {
         color: var(--text-primary);
         background: var(--bg-secondary);
     }
 
+
     [data-theme="dark"] .border-gray-100 {
         border-color: var(--border-color);
     }
+
 
     [data-theme="dark"] .hover\:border-purple-200:hover {
         border-color: rgba(167, 139, 250, 0.3);
     }
 
+
     [data-theme="dark"] .hover\:bg-gradient-to-r:hover {
         background: var(--bg-secondary);
     }
+
 
     [data-theme="dark"] .bg-gradient-to-r.from-purple-50.to-indigo-50 {
         background: var(--bg-secondary);
         border-color: var(--border-color);
     }
 
+
     [data-theme="dark"] .text-xs.text-gray-500.bg-gray-100 {
         background-color: var(--bg-secondary);
         color: var(--text-secondary);
     }
+
 
     /* Dark mode styles for paused habits */
     [data-theme="dark"] .text-gray-700 {
         color: var(--text-primary);
     }
 
+
     [data-theme="dark"] .bg-yellow-50 {
         background-color: rgba(250, 204, 21, 0.1);
     }
+
 
     [data-theme="dark"] .bg-yellow-200 {
         background-color: rgba(250, 204, 21, 0.3);
         color: var(--text-primary);
     }
 
+
     [data-theme="dark"] .text-yellow-800 {
         color: var(--text-primary);
     }
+
 
     [data-theme="dark"] .border-yellow-100 {
         border-color: rgba(250, 204, 21, 0.2);
     }
 
+
     [data-theme="dark"] .border-yellow-300 {
         border-color: rgba(250, 204, 21, 0.3);
     }
-    
+   
     .modal {
         display: none;
         position: fixed;
@@ -109,6 +128,7 @@
         backdrop-filter: blur(4px);
     }
 
+
     .modal.show {
         display: flex;
         align-items: center;
@@ -116,10 +136,12 @@
         animation: fadeIn 0.3s ease-out;
     }
 
+
     @keyframes fadeIn {
         from { opacity: 0; }
         to { opacity: 1; }
     }
+
 
     .modal-content {
         background: var(--bg-primary, white);
@@ -132,10 +154,12 @@
         border: 1px solid var(--border-color, #e5e7eb);
     }
 
+
     [data-theme="dark"] .bg-gradient-to-r.from-purple-50.to-indigo-50.rounded-lg {
         background: var(--bg-secondary);
         border-color: var(--border-color);
     }
+
 
     @keyframes slideUp {
         from { transform: translateY(20px); opacity: 0; }
@@ -143,6 +167,7 @@
     }
 </style>
 {% endblock %}
+
 
 {% block content %}
 <div class="mb-8">
@@ -159,7 +184,8 @@
             </div>
         </div>
 
-        
+
+       
         {% if habits %}
         <button onclick="openShareModal()"
             class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-md hover:shadow-lg">
@@ -172,6 +198,7 @@
     </div>
 </div>
 
+
 <div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-6 mb-8 border border-purple-100">
     <div class="flex items-start gap-3">
         <span class="text-2xl">🧘</span>
@@ -181,6 +208,7 @@
         </div>
     </div>
 </div>
+
 
 <div class="grid lg:grid-cols-2 gap-8">
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -202,10 +230,12 @@
                     placeholder="Why is this habit important to you?"></textarea>
             </div>
 
+
             <div>
             <label for="habit-category" class="block text-sm font-medium text-gray-700 mb-2">
             Category
             </label>
+
 
             <select id="habit-category" name="category"
             class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200">
@@ -222,6 +252,7 @@
             </select>
             </div>
 
+
             <div id="custom-category-wrap" class="hidden">
             <label for="habit-category-custom" class="block text-sm font-medium text-gray-700 mb-2">
             Custom Category
@@ -230,6 +261,7 @@
             class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
             placeholder="e.g., Sleep, Diet, Coding, Language..." />
             </div>
+
 
             <button type="submit"
                 class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-lg font-medium hover:from-purple-700 hover:to-indigo-700 transform hover:scale-[1.02] transition-all duration-200 shadow-lg">
@@ -243,6 +275,7 @@
         </form>
     </div>
 
+
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-2">
@@ -253,7 +286,8 @@
                 {% if habits %}
                 <span class="text-sm text-gray-500">{{ habits|length }} habit{{ 's' if habits|length != 1 else '' }}</span>
 
-                
+
+               
                 <div class="relative">
                     <select id="sortSelect" onchange="window.location.href='?sort=' + this.value"
                         class="text-sm px-3 py-1.5 border border-gray-200 rounded-lg bg-white hover:border-purple-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 cursor-pointer appearance-none pr-8">
@@ -266,8 +300,9 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                     </svg>
                 </div>
-                
+               
                 {% endif %}
+
 
                 <a href="/habit-tracker/archived" class="text-sm text-purple-600 hover:text-purple-700 underline font-medium">
                     View Archived
@@ -275,25 +310,23 @@
             </div>
         </div>
 
+
         {% if habits %}
             <div class="space-y-3 max-h-96 overflow-y-auto">
                 {% for habit in habits %}
                 <div class="group p-4 rounded-lg border border-gray-100 hover:border-purple-200 hover:bg-gradient-to-r hover:from-purple-50 hover:to-indigo-50 transition-all duration-200">
                     <div class="flex items-start justify-between mb-2">
                         <div class="flex items-center gap-2 flex-1">
-                            
-                           <!-- Mark habit complete button -->
-<form method="POST" action="/habit-tracker/complete/{{ habit.id }}" class="inline">
-    <button type="submit" class="text-purple-600 hover:text-purple-800 transition-colors">
-        {% set today = habit.completed_dates|default('[]')|from_json %}
-        {% if now().strftime('%Y-%m-%d') in today %}
-            <span class="text-2xl">✓</span>
-        {% else %}
-            <span class="text-2xl opacity-30">○</span>
-        {% endif %}
-    </button>
-</form>
-
+                            <form method="POST" action="/habit-tracker/toggle/{{ habit.id }}" class="inline">
+                                <button type="submit" class="text-purple-600 hover:text-purple-800 transition-colors">
+                                    {% set completed = habit.completed_dates|default('[]')|from_json %}
+                                    {% if today_str in completed %}
+                                        <span class="text-2xl">✓</span>
+                                    {% else %}
+                                        <span class="text-2xl opacity-30">○</span>
+                                    {% endif %}
+                                </button>
+                            </form>
                             <span class="font-medium text-gray-900 group-hover:text-purple-700 habit-name-display-{{ habit.id }}">{{ habit.name }}</span>
                             <form method="POST" action="/habit-tracker/update/{{ habit.id }}" class="hidden habit-edit-form-{{ habit.id }} flex-1">
                                 <input type="text" name="name" value="{{ habit.name }}"
@@ -306,7 +339,8 @@
                                 {{ habit.created_at.strftime('%b %d') }}
                             </span>
 
-                            
+
+                           
                             <button type="button"
                                 class="text-purple-400 hover:text-purple-600 transition-colors duration-200 opacity-0 group-hover:opacity-100 habit-edit-btn-{{ habit.id }}"
                                 onclick="toggleEditMode({{ habit.id }})"
@@ -332,7 +366,8 @@
                                 </svg>
                             </button>
 
-                            
+
+                           
                             <form method="POST" action="/habit-tracker/pause/{{ habit.id }}" class="inline">
                                 <button type="submit"
                                     class="text-yellow-400 hover:text-yellow-600 transition-colors duration-200 opacity-0 group-hover:opacity-100"
@@ -343,7 +378,8 @@
                                 </button>
                             </form>
 
-                          
+
+                         
                             <form method="POST" action="/habit-tracker/archive/{{ habit.id }}" class="inline">
                                 <button type="submit"
                                     class="text-blue-400 hover:text-blue-600 transition-colors duration-200 opacity-0 group-hover:opacity-100"
@@ -354,7 +390,8 @@
                                 </button>
                             </form>
 
-                            
+
+                           
                             <form method="POST" action="/habit-tracker/delete/{{ habit.id }}" class="inline">
                                 <button type="submit"
                                     class="text-red-400 hover:text-red-600 transition-colors duration-200 opacity-0 group-hover:opacity-100"
@@ -379,6 +416,7 @@
                             </span>
                         {% endif %}
 
+
                         <span class="inline-flex items-center gap-1 text-xs font-medium bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full">
                             🔥 0 day streak
                         </span>
@@ -402,6 +440,8 @@
 </div>
 
 
+
+
 {% if paused_habits %}
 <div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
     <div class="flex items-center justify-between mb-6">
@@ -411,6 +451,7 @@
             <span class="text-sm text-gray-500">({{ paused_habits|length }})</span>
         </div>
     </div>
+
 
     <div class="space-y-3">
         {% for habit in paused_habits %}
@@ -425,6 +466,7 @@
                         Paused {{ habit.paused_at.strftime('%b %d') }}
                     </span>
 
+
                     <form method="POST" action="/habit-tracker/resume/{{ habit.id }}" class="inline">
                         <button type="submit"
                             class="text-green-400 hover:text-green-600 transition-colors duration-200 opacity-0 group-hover:opacity-100"
@@ -435,6 +477,7 @@
                             </svg>
                         </button>
                     </form>
+
 
                     <form method="POST" action="/habit-tracker/delete/{{ habit.id }}" class="inline">
                         <button type="submit"
@@ -464,12 +507,15 @@
 </div>
 {% endif %}
 
+
 <div class="mt-8 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-8 text-white">
     <div class="max-w-3xl mx-auto text-center">
         <h3 class="text-2xl font-bold mb-2">Did You Know?</h3>
         <p class="opacity-90">It takes an average of 66 days to form a new habit. Start small, stay consistent, and celebrate your progress!</p>
     </div>
 </div>
+
+
 
 
 <div id="shareModal" class="modal">
@@ -483,9 +529,11 @@
             </button>
         </div>
 
+
         <div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4 mb-4 border border-purple-200">
             <pre id="shareText" class="text-sm text-gray-800 whitespace-pre-wrap font-mono">Loading...</pre>
         </div>
+
 
         <div class="flex gap-3">
             <button onclick="copyToClipboard()"
@@ -504,13 +552,17 @@
 </div>
 
 
+
+
 <script>
   (function () {
     const selectEl = document.getElementById('habit-category');
     const customWrap = document.getElementById('custom-category-wrap');
     const customInput = document.getElementById('habit-category-custom');
 
+
     if (!selectEl) return;
+
 
     function toggleCustom() {
       const isOther = selectEl.value === 'other';
@@ -524,9 +576,11 @@
       }
     }
 
+
     selectEl.addEventListener('change', toggleCustom);
     toggleCustom();
   })();
+
 
  
   function toggleEditMode(habitId) {
@@ -536,16 +590,19 @@
     const saveBtn = document.querySelector('.habit-save-btn-' + habitId);
     const cancelBtn = document.querySelector('.habit-cancel-btn-' + habitId);
 
+
     nameDisplay.classList.add('hidden');
     editForm.classList.remove('hidden');
     editBtn.classList.add('hidden');
     saveBtn.classList.remove('hidden');
     cancelBtn.classList.remove('hidden');
 
+
     const input = editForm.querySelector('input[name="name"]');
     input.focus();
     input.select();
   }
+
 
   function cancelEdit(habitId) {
     const nameDisplay = document.querySelector('.habit-name-display-' + habitId);
@@ -554,6 +611,7 @@
     const saveBtn = document.querySelector('.habit-save-btn-' + habitId);
     const cancelBtn = document.querySelector('.habit-cancel-btn-' + habitId);
 
+
     nameDisplay.classList.remove('hidden');
     editForm.classList.add('hidden');
     editBtn.classList.remove('hidden');
@@ -561,11 +619,14 @@
     cancelBtn.classList.add('hidden');
   }
 
+
   function saveEdit(habitId) {
     const editForm = document.querySelector('.habit-edit-form-' + habitId);
     editForm.submit();
   }
 </script>
+
+
 
 
 <script>
@@ -575,34 +636,43 @@ function openShareModal() {
     generateShareText();
 }
 
+
 function closeShareModal() {
     const modal = document.getElementById('shareModal');
     modal.classList.remove('show');
 }
 
+
 function generateShareText() {
     const habitCount = {{ habits|length if habits else 0 }};
 
+
     const shareText = `🎯 My Habit Tracker Progress 🎯
+
 
 📊 Active Habits: ${habitCount}
 🔥 Longest Streak: 0 days
 ✅ Habits Tracked: ${habitCount} total
 💪 Keep going strong!
 
+
 Building better habits, one day at a time!
 #HabitTracker #SelfImprovement #Goals`;
+
 
     document.getElementById('shareText').textContent = shareText;
 }
 
+
 function copyToClipboard() {
     const shareText = document.getElementById('shareText').textContent;
+
 
     navigator.clipboard.writeText(shareText).then(() => {
         const button = document.getElementById('copyButtonText');
         const originalText = button.textContent;
         button.textContent = '✓ Copied!';
+
 
         setTimeout(() => {
             button.textContent = originalText;
@@ -612,6 +682,7 @@ function copyToClipboard() {
         console.error('Copy failed:', err);
     });
 }
+
 
 document.getElementById('shareModal').addEventListener('click', function(e) {
     if (e.target === this) {

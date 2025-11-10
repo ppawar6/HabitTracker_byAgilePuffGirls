@@ -3,15 +3,19 @@ import os
 import random
 from datetime import datetime, timezone
 
+
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for
+
 
 from extensions import db
 from models import Habit, UserPreferences
+
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "dev-secret-key-change-in-production"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
 
 db.init_app(app)
 
@@ -31,12 +35,15 @@ from routes.habits import habits_bp  # noqa: E402
 from routes.notifications import create_notification, notifications_bp  # noqa: E402
 from routes.theme import theme_bp  # noqa: E402
 
+
 app.register_blueprint(theme_bp)
 app.register_blueprint(habits_bp)
 app.register_blueprint(notifications_bp)
 
+
 # Store OTPs temporarily
 otp_store = {}
+
 
 CATEGORIES = [
     "Health",
@@ -50,10 +57,14 @@ CATEGORIES = [
 ]
 
 
+
+
 @app.route("/")
 def home():
     """Landing page"""
     return render_template("home/index.html")
+
+
 
 
 @app.route("/signin", methods=["GET", "POST"])
@@ -62,22 +73,27 @@ def signin():
     if request.method == "POST":
         data = request.get_json()
 
+
         if "email" in data and "action" not in data:
             # Generate OTP
             email = data["email"]
             otp = str(random.randint(100000, 999999))
             otp_store[email] = otp
 
+
             print(f"\n{'=' * 50}")
             print(f"OTP for {email}: {otp}")
             print(f"{'=' * 50}\n")
 
+
             return jsonify({"success": True, "message": f"OTP sent to {email}", "otp": otp})
+
 
         elif "action" in data and data["action"] == "verify":
             # Verify OTP
             email = data["email"]
             otp = data["otp"]
+
 
             if email in otp_store and otp_store[email] == otp:
                 session["authenticated"] = True
@@ -87,7 +103,10 @@ def signin():
             else:
                 return jsonify({"success": False, "message": "Invalid OTP"})
 
+
     return render_template("home/signIn.html")
+
+
 
 
 @app.route("/habit-tracker", methods=["GET", "POST"])
@@ -96,13 +115,21 @@ def habit_tracker():
     if not session.get("authenticated"):
         return redirect(url_for("signin"))
 
+
     if request.method == "POST":
         name = request.form.get("name", "").strip()
         description = request.form.get("description", "").strip()
         category = request.form.get("category", "").strip()
 
+<<<<<<< HEAD
         if category == "other":
             category = request.form.get("category_custom", "").strip()
+=======
+
+        if category == 'other':
+            category = request.form.get('category_custom', '').strip()
+>>>>>>> cbba737 (fix: remove hardcoded port and minor test improvements)
+
 
         if name:
             habit = Habit(
@@ -124,13 +151,23 @@ def habit_tracker():
 
             db.session.commit()
 
+
         return redirect(url_for("habit_tracker"))
 
+<<<<<<< HEAD
     sort_by = request.args.get("sort", "newest")
+=======
+
+
+
+    sort_by = request.args.get('sort', 'newest')
+>>>>>>> cbba737 (fix: remove hardcoded port and minor test improvements)
+
 
     # Get active habits (not archived and not paused)
     habits = Habit.query.filter_by(is_archived=False, is_paused=False).all()
 
+<<<<<<< HEAD
     if sort_by == "az":
         habits = sorted(habits, key=lambda h: h.name.lower())
     elif sort_by == "za":
@@ -138,13 +175,29 @@ def habit_tracker():
     elif sort_by == "oldest":
         habits = sorted(habits, key=lambda h: h.created_at)
     else:
+=======
+
+    if sort_by == 'az':
+       
+        habits = sorted(habits, key=lambda h: h.name.lower())
+    elif sort_by == 'za':
+       
+        habits = sorted(habits, key=lambda h: h.name.lower(), reverse=True)
+    elif sort_by == 'oldest':
+       
+        habits = sorted(habits, key=lambda h: h.created_at)
+    else:  
+   
+>>>>>>> cbba737 (fix: remove hardcoded port and minor test improvements)
         habits = sorted(habits, key=lambda h: h.created_at, reverse=True)
+
 
     paused_habits = (
         Habit.query.filter_by(is_archived=False, is_paused=True)
         .order_by(Habit.paused_at.desc())
         .all()
     )
+
 
     return render_template(
         "apps/habit_tracker/index.html",
@@ -154,6 +207,8 @@ def habit_tracker():
         categories=CATEGORIES,
         current_sort=sort_by,
     )
+
+
 
 
 @app.route("/habit-tracker/delete/<int:habit_id>", methods=["POST"])
@@ -179,11 +234,14 @@ def delete_habit(habit_id):
     return redirect(url_for("habit_tracker"))
 
 
+
+
 @app.route("/habit-tracker/update/<int:habit_id>", methods=["POST"])
 def update_habit(habit_id):
     """Update habit name"""
     if not session.get("authenticated"):
         return redirect(url_for("signin"))
+
 
     habit = db.session.get(Habit, habit_id)
     if not habit:
@@ -206,7 +264,10 @@ def update_habit(habit_id):
 
         db.session.commit()
 
+
     return redirect(url_for("habit_tracker"))
+
+
 
 
 @app.route("/habit-tracker/archive/<int:habit_id>", methods=["POST"])
@@ -215,9 +276,11 @@ def archive_habit(habit_id):
     if not session.get("authenticated"):
         return redirect(url_for("signin"))
 
+
     habit = db.session.get(Habit, habit_id)
     if not habit:
         return "Habit not found", 404
+
 
     habit.is_archived = True
     habit.archived_at = datetime.now(timezone.utc)
@@ -236,15 +299,19 @@ def archive_habit(habit_id):
     return redirect(url_for("habit_tracker"))
 
 
+
+
 @app.route("/habit-tracker/unarchive/<int:habit_id>", methods=["POST"])
 def unarchive_habit(habit_id):
     """Unarchive a habit"""
     if not session.get("authenticated"):
         return redirect(url_for("signin"))
 
+
     habit = db.session.get(Habit, habit_id)
     if not habit:
         return "Habit not found", 404
+
 
     habit.is_archived = False
     habit.archived_at = None
@@ -263,15 +330,19 @@ def unarchive_habit(habit_id):
     return redirect(request.referrer or url_for("habit_tracker"))
 
 
+
+
 @app.route("/habit-tracker/pause/<int:habit_id>", methods=["POST"])
 def pause_habit(habit_id):
     """Pause a habit"""
     if not session.get("authenticated"):
         return redirect(url_for("signin"))
 
+
     habit = db.session.get(Habit, habit_id)
     if not habit:
         return "Habit not found", 404
+
 
     habit.is_paused = True
     habit.paused_at = datetime.now(timezone.utc)
@@ -288,7 +359,6 @@ def pause_habit(habit_id):
 
     db.session.commit()
     return redirect(url_for("habit_tracker"))
-
 
 @app.route("/habit-tracker/resume/<int:habit_id>", methods=["POST"])
 def resume_habit(habit_id):
@@ -316,6 +386,29 @@ def resume_habit(habit_id):
     db.session.commit()
     return redirect(request.referrer or url_for("habit_tracker"))
 
+@app.route("/habit-tracker/toggle/<int:habit_id>", methods=["POST"])
+def toggle_habit_completion(habit_id):
+    """Mark or unmark a habit as completed for today"""
+    if not session.get("authenticated"):
+        return redirect(url_for("signin"))
+
+    habit = db.session.get(Habit, habit_id)
+    if not habit:
+        return "Habit not found", 404
+
+    today_str = datetime.now(timezone.utc).date().isoformat()
+    completed = json.loads(habit.completed_dates or "[]")
+
+    if today_str in completed:
+        completed.remove(today_str)  # unmark as complete
+    else:
+        completed.append(today_str)  # mark as complete
+
+    habit.completed_dates = json.dumps(completed)
+    db.session.commit()
+
+    return redirect(url_for("habit_tracker"))
+
 
 @app.route("/habit-tracker/archived")
 def archived_habits():
@@ -323,53 +416,10 @@ def archived_habits():
     if not session.get("authenticated"):
         return redirect(url_for("signin"))
 
+
     habits = Habit.query.filter_by(is_archived=True).order_by(Habit.archived_at.desc()).all()
     return render_template(
         "apps/habit_tracker/archived.html", page_id="habit-tracker", habits=habits
-    )
-
-
-@app.route("/habit-tracker/stats")
-def habit_stats():
-    """View habit statistics dashboard"""
-    if not session.get("authenticated"):
-        return redirect(url_for("signin"))
-
-    # Get all habits
-    all_habits = Habit.query.all()
-
-    # Calculate basic statistics
-    total_habits = len(all_habits)
-    active_habits = len([h for h in all_habits if not h.is_archived and not h.is_paused])
-    paused_habits = len([h for h in all_habits if h.is_paused and not h.is_archived])
-    archived_habits = len([h for h in all_habits if h.is_archived])
-
-    # Calculate habits by category
-    category_counts = {}
-    for habit in all_habits:
-        category = habit.category or "Uncategorized"
-        category_counts[category] = category_counts.get(category, 0) + 1
-
-    # Sort categories by count (descending)
-    sorted_categories = sorted(category_counts.items(), key=lambda x: x[1], reverse=True)
-
-    # Find most recent and oldest habit
-    most_recent = None
-    oldest = None
-    if all_habits:
-        most_recent = max(all_habits, key=lambda h: h.created_at)
-        oldest = min(all_habits, key=lambda h: h.created_at)
-
-    return render_template(
-        "apps/habit_tracker/stats.html",
-        page_id="habit-tracker",
-        total_habits=total_habits,
-        active_habits=active_habits,
-        paused_habits=paused_habits,
-        archived_habits=archived_habits,
-        category_counts=sorted_categories,
-        most_recent=most_recent,
-        oldest=oldest,
     )
 
 
@@ -397,35 +447,13 @@ def inject_show_tips():
         show_tips = not (prefs and prefs.has_seen_tutorial)
     return dict(show_tips=show_tips)
 
+from datetime import datetime, timezone
+
 @app.context_processor
-def inject_now():
-    return {'now': datetime.now}
+def inject_today_date():
+    """Make today's date string available to all templates"""
+    return {'today_str': datetime.now(timezone.utc).date().isoformat()}
 
-@app.route("/habit-tracker/complete/<int:habit_id>", methods=["POST"])
-def complete_habit(habit_id):
-    """Mark a habit as completed for today"""
-    if not session.get("authenticated"):
-        return redirect(url_for("signin"))
-
-    habit = Habit.query.get_or_404(habit_id)
-
-    # Load previous completion dates
-    completed_dates = []
-    if habit.completed_dates:
-        try:
-            completed_dates = json.loads(habit.completed_dates)
-        except json.JSONDecodeError:
-            completed_dates = []
-
-    # Add today’s date if not already present
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    if today not in completed_dates:
-        completed_dates.append(today)
-
-    habit.completed_dates = json.dumps(completed_dates)
-    db.session.commit()
-
-    return redirect(url_for("habit_tracker"))
 
 @app.route("/logout")
 def logout():
