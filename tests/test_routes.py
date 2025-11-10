@@ -766,16 +766,23 @@ def test_share_progress_requires_authentication(client):
 
 
 def test_sort_parameter_default_newest(logged_in_client, app):
-    """Test that default sorting is newest first."""
+    """Test that default sorting is by priority (and within same priority, oldest first)."""
     with app.app_context():
         from datetime import datetime, timedelta
 
+        # Create habits with different priorities to test default sorting
         habit1 = Habit(
-            name="Oldest Habit",
-            description="First",
+            name="Low Priority Habit",
+            description="Low",
+            priority="Low",
             created_at=datetime.utcnow() - timedelta(days=2),
         )
-        habit2 = Habit(name="Newest Habit", description="Last", created_at=datetime.utcnow())
+        habit2 = Habit(
+            name="High Priority Habit",
+            description="High",
+            priority="High",
+            created_at=datetime.utcnow(),
+        )
         db.session.add_all([habit1, habit2])
         db.session.commit()
 
@@ -783,9 +790,10 @@ def test_sort_parameter_default_newest(logged_in_client, app):
     html = response.data.decode("utf-8")
 
     assert response.status_code == 200
-    newest_pos = html.find("Newest Habit")
-    oldest_pos = html.find("Oldest Habit")
-    assert newest_pos < oldest_pos
+    high_pos = html.find("High Priority Habit")
+    low_pos = html.find("Low Priority Habit")
+    # High priority should appear before low priority by default
+    assert high_pos < low_pos
 
 
 def test_sort_parameter_oldest(logged_in_client, app):
