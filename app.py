@@ -121,14 +121,8 @@ def habit_tracker():
         description = request.form.get("description", "").strip()
         category = request.form.get("category", "").strip()
 
-<<<<<<< HEAD
         if category == "other":
             category = request.form.get("category_custom", "").strip()
-=======
-
-        if category == 'other':
-            category = request.form.get('category_custom', '').strip()
->>>>>>> cbba737 (fix: remove hardcoded port and minor test improvements)
 
 
         if name:
@@ -154,28 +148,12 @@ def habit_tracker():
 
         return redirect(url_for("habit_tracker"))
 
-<<<<<<< HEAD
     sort_by = request.args.get("sort", "newest")
-=======
-
-
-
-    sort_by = request.args.get('sort', 'newest')
->>>>>>> cbba737 (fix: remove hardcoded port and minor test improvements)
 
 
     # Get active habits (not archived and not paused)
     habits = Habit.query.filter_by(is_archived=False, is_paused=False).all()
 
-<<<<<<< HEAD
-    if sort_by == "az":
-        habits = sorted(habits, key=lambda h: h.name.lower())
-    elif sort_by == "za":
-        habits = sorted(habits, key=lambda h: h.name.lower(), reverse=True)
-    elif sort_by == "oldest":
-        habits = sorted(habits, key=lambda h: h.created_at)
-    else:
-=======
 
     if sort_by == 'az':
        
@@ -188,7 +166,6 @@ def habit_tracker():
         habits = sorted(habits, key=lambda h: h.created_at)
     else:  
    
->>>>>>> cbba737 (fix: remove hardcoded port and minor test improvements)
         habits = sorted(habits, key=lambda h: h.created_at, reverse=True)
 
 
