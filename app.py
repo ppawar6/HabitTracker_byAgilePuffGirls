@@ -100,6 +100,7 @@ def habit_tracker():
         name = request.form.get("name", "").strip()
         description = request.form.get("description", "").strip()
         category = request.form.get("category", "").strip()
+        priority = request.form.get("priority", "Medium").strip()
 
         if category == "other":
             category = request.form.get("category_custom", "").strip()
@@ -109,6 +110,7 @@ def habit_tracker():
                 name=name,
                 description=description or None,
                 category=(category or None),
+                priority=priority or "Medium",
             )
             db.session.add(habit)
 
@@ -126,19 +128,31 @@ def habit_tracker():
 
         return redirect(url_for("habit_tracker"))
 
-    sort_by = request.args.get("sort", "newest")
+    sort_by = request.args.get("sort", "priority")
 
     # Get active habits (not archived and not paused)
     habits = Habit.query.filter_by(is_archived=False, is_paused=False).all()
 
-    if sort_by == "az":
+    # Define priority order for sorting
+    priority_order = {"High": 0, "Medium": 1, "Low": 2}
+
+    if sort_by == "priority":
+        habits = sorted(
+            habits, key=lambda h: (priority_order.get(h.priority, 1), h.created_at), reverse=False
+        )
+    elif sort_by == "az":
         habits = sorted(habits, key=lambda h: h.name.lower())
     elif sort_by == "za":
         habits = sorted(habits, key=lambda h: h.name.lower(), reverse=True)
     elif sort_by == "oldest":
         habits = sorted(habits, key=lambda h: h.created_at)
-    else:
+    elif sort_by == "newest":
         habits = sorted(habits, key=lambda h: h.created_at, reverse=True)
+    else:
+        # Default to priority sorting
+        habits = sorted(
+            habits, key=lambda h: (priority_order.get(h.priority, 1), h.created_at), reverse=False
+        )
 
     paused_habits = (
         Habit.query.filter_by(is_archived=False, is_paused=True)
@@ -410,6 +424,7 @@ def init_db():
 
 
 if __name__ == "__main__":
+    # Get the actual database path from the instance folder
     db_path = os.path.join(app.instance_path, "app.db")
     if not os.path.exists(db_path):
         init_db()

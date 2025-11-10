@@ -18,6 +18,7 @@ class Habit(db.Model):
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
     category = db.Column(db.String(60))
+    priority = db.Column(db.String(10), default="Medium")  # 'High', 'Medium', 'Low'
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     completed_dates = db.Column(db.Text)
     user_id = db.Column(db.Integer, nullable=True, default=0)

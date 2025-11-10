@@ -1,6 +1,6 @@
 # Habit Tracker
 
-![CI](https://github.com/yashashri2409/SW-555-Agile-Puff-Girls/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/ppawar6/HabitTracker_byAgilePuffGirls/actions/workflows/ci.yml/badge.svg)
 
 ## Project Description
 
