@@ -89,7 +89,6 @@ def signin():
 
     return render_template("home/signIn.html")
 
-
 @app.route("/habit-tracker", methods=["GET", "POST"])
 def habit_tracker():
     """Habit tracker - protected"""
@@ -128,10 +127,35 @@ def habit_tracker():
 
         return redirect(url_for("habit_tracker"))
 
+    # ---- GET: filters + sorting ----
     sort_by = request.args.get("sort", "priority")
 
+    # Multiple category & priority filters (comma-separated in URL)
+    category_param = request.args.get("category", "")
+    priority_param = request.args.get("priority", "")
+
+    if category_param:
+        category_filters = [c for c in category_param.split(",") if c]
+    else:
+        category_filters = []
+
+    if priority_param:
+        priority_filters = [p for p in priority_param.split(",") if p]
+    else:
+        priority_filters = []
+
     # Get active habits (not archived and not paused)
-    habits = Habit.query.filter_by(is_archived=False, is_paused=False).all()
+    base_query = Habit.query.filter_by(is_archived=False, is_paused=False)
+
+    # Filter by one or more categories
+    if category_filters:
+        base_query = base_query.filter(Habit.category.in_(category_filters))
+
+    # Filter by one or more priority levels
+    if priority_filters:
+        base_query = base_query.filter(Habit.priority.in_(priority_filters))
+
+    habits = base_query.all()
 
     # Define priority order for sorting
     priority_order = {"High": 0, "Medium": 1, "Low": 2}
@@ -154,11 +178,19 @@ def habit_tracker():
             habits, key=lambda h: (priority_order.get(h.priority, 1), h.created_at), reverse=False
         )
 
+    # Paused habits (unchanged)
     paused_habits = (
         Habit.query.filter_by(is_archived=False, is_paused=True)
         .order_by(Habit.paused_at.desc())
         .all()
     )
+
+    # Build category list for filter: default CATEGORIES + any custom ones in DB
+    db_categories = {
+        c for (c,) in db.session.query(Habit.category).distinct()
+        if c is not None and c.strip()
+    }
+    filter_categories = sorted(set(CATEGORIES) | db_categories)
 
     return render_template(
         "apps/habit_tracker/index.html",
@@ -167,7 +199,12 @@ def habit_tracker():
         paused_habits=paused_habits,
         categories=CATEGORIES,
         current_sort=sort_by,
+        filter_categories=filter_categories,
+        current_categories=category_filters,   # list of selected categories
+        current_priorities=priority_filters,   # list of selected priority levels
     )
+
+
 
 
 @app.route("/habit-tracker/delete/<int:habit_id>", methods=["POST"])

@@ -577,6 +577,61 @@ def test_paused_habit_independent_of_archive(logged_in_client, app):
     assert "ArchivedHabit789" not in html
     assert "BothPausedArchived999" not in html
 
+def test_filter_by_single_category_shows_only_matching_habits(logged_in_client, app):
+    """Filtering by a single category shows only habits in that category."""
+    with app.app_context():
+        habit_study = Habit(name="Study Habit", category="Study", priority="Medium")
+        habit_fitness = Habit(name="Fitness Habit", category="Fitness", priority="High")
+        habit_other = Habit(name="Other Habit", category="Social", priority="Low")
+        db.session.add_all([habit_study, habit_fitness, habit_other])
+        db.session.commit()
+
+    response = logged_in_client.get("/habit-tracker?category=Study")
+    html = response.data.decode("utf-8")
+
+    assert response.status_code == 200
+    # Only the Study habit should be present
+    assert "Study Habit" in html
+    assert "Fitness Habit" not in html
+    assert "Other Habit" not in html
+
+def test_filter_by_multiple_categories_shows_union(logged_in_client, app):
+    """Filtering by multiple categories (comma separated) returns all matching habits."""
+    with app.app_context():
+        habit_study = Habit(name="Study Habit", category="Study", priority="Medium")
+        habit_fitness = Habit(name="Fitness Habit", category="Fitness", priority="High")
+        habit_mind = Habit(name="Mindfulness Habit", category="Mindfulness", priority="Low")
+        db.session.add_all([habit_study, habit_fitness, habit_mind])
+        db.session.commit()
+
+    # Study and Fitness categories selected
+    response = logged_in_client.get("/habit-tracker?category=Study,Fitness")
+    html = response.data.decode("utf-8")
+
+    assert response.status_code == 200
+    assert "Study Habit" in html
+    assert "Fitness Habit" in html
+    # Mindfulness should be filtered out
+    assert "Mindfulness Habit" not in html
+
+def test_filter_by_category_and_priority_combination(logged_in_client, app):
+    """Filtering by both category and priority returns only habits matching both."""
+    with app.app_context():
+        habit_match = Habit(name="Study High", category="Study", priority="High")
+        habit_wrong_priority = Habit(name="Study Low", category="Study", priority="Low")
+        habit_wrong_category = Habit(name="Fitness High", category="Fitness", priority="High")
+        db.session.add_all([habit_match, habit_wrong_priority, habit_wrong_category])
+        db.session.commit()
+
+    # Looking for category=Study AND priority=High
+    response = logged_in_client.get("/habit-tracker?category=Study&priority=High")
+    html = response.data.decode("utf-8")
+
+    assert response.status_code == 200
+    assert "Study High" in html
+    assert "Study Low" not in html
+    assert "Fitness High" not in html
+
 
 # === Toggle Completion Tests ===
 
