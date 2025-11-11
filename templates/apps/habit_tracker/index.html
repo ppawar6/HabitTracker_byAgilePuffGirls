@@ -282,6 +282,29 @@
                 {{ habits|length }} habit{{ 's' if habits|length != 1 else '' }}
             </span>
 
+            <!-- Search Bar for Search Habits Feature -->
+            <div class="w-full mb-4">
+                <form method="GET" action="/habit-tracker" class="flex gap-2">
+                    <input type="text" 
+                           name="search" 
+                           value="{{ search_query or '' }}"
+                           placeholder="🔍 Search habits by name, description, or category..."
+                           class="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                           autocomplete="off">
+                    <button type="submit" 
+                            class="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-md">
+                        Search
+                    </button>
+                    {% if search_query %}
+                    <a href="/habit-tracker" 
+                       class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all duration-200 font-medium">
+                        Clear
+                    </a>
+                    {% endif %}
+                </form>
+            </div>
+            <!-- END NEW: Search Bar -->
+
             <!-- 🔹 Sort dropdown (same behavior as develop) -->
             <div class="relative">
                 <select id="sortSelect"
@@ -540,10 +563,22 @@
         {% else %}
             <div class="text-center py-12">
                 <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full mb-4">
-                    <span class="text-2xl">🌱</span>
+                    {% if search_query %}
+                        <span class="text-2xl">🔍</span>
+                    {% else %}
+                        <span class="text-2xl">🌱</span>
+                    {% endif %}
                 </div>
-                <p class="text-gray-500 mb-2">No habits yet</p>
-                <p class="text-sm text-gray-400">Plant your first habit seed and watch it grow into a consistent routine.</p>
+                {% if search_query %}
+                    <p class="text-gray-500 mb-2">No habits found</p>
+                    <p class="text-sm text-gray-400">No habits match "{{ search_query }}"</p>
+                    <a href="/habit-tracker" class="inline-block mt-4 text-purple-600 hover:text-purple-700 underline">
+                        Clear search and view all habits
+                    </a>
+                {% else %}
+                    <p class="text-gray-500 mb-2">No habits yet</p>
+                    <p class="text-sm text-gray-400">Plant your first habit seed and watch it grow into a consistent routine.</p>
+                {% endif %}
             </div>
         {% endif %}
     </div>
