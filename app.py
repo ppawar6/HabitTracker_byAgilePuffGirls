@@ -15,6 +15,16 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
 
+# ✅ NEW: ensure tables exist once, using before_request (Flask 3 compatible)
+tables_created = False
+
+@app.before_request
+def ensure_tables_exist():
+    global tables_created
+    if not tables_created:
+        db.create_all()
+        tables_created = True
+
 
 # Add custom Jinja filters
 @app.template_filter("from_json")
@@ -89,6 +99,7 @@ def signin():
 
     return render_template("home/signIn.html")
 
+
 @app.route("/habit-tracker", methods=["GET", "POST"])
 def habit_tracker():
     """Habit tracker - protected"""
@@ -129,6 +140,9 @@ def habit_tracker():
 
     # ---- GET: filters + sorting ----
     sort_by = request.args.get("sort", "priority")
+    
+    # NEW: Search query parameter
+    search_query = request.args.get("search", "").strip()
 
     # Multiple category & priority filters (comma-separated in URL)
     category_param = request.args.get("category", "")
@@ -155,6 +169,18 @@ def habit_tracker():
     if priority_filters:
         base_query = base_query.filter(Habit.priority.in_(priority_filters))
 
+    # NEW: Apply search filter
+    if search_query:
+        search_pattern = f"%{search_query}%"
+        from sqlalchemy import or_
+        base_query = base_query.filter(
+            or_(
+                Habit.name.ilike(search_pattern),
+                Habit.description.ilike(search_pattern),
+                Habit.category.ilike(search_pattern),
+            )
+        )
+
     habits = base_query.all()
 
     # Define priority order for sorting
@@ -162,7 +188,9 @@ def habit_tracker():
 
     if sort_by == "priority":
         habits = sorted(
-            habits, key=lambda h: (priority_order.get(h.priority, 1), h.created_at), reverse=False
+            habits,
+            key=lambda h: (priority_order.get(h.priority, 1), h.created_at),
+            reverse=False,
         )
     elif sort_by == "az":
         habits = sorted(habits, key=lambda h: h.name.lower())
@@ -175,15 +203,20 @@ def habit_tracker():
     else:
         # Default to priority sorting
         habits = sorted(
-            habits, key=lambda h: (priority_order.get(h.priority, 1), h.created_at), reverse=False
+            habits,
+            key=lambda h: (priority_order.get(h.priority, 1), h.created_at),
+            reverse=False,
         )
 
-    # Paused habits (unchanged)
-    paused_habits = (
-        Habit.query.filter_by(is_archived=False, is_paused=True)
-        .order_by(Habit.paused_at.desc())
-        .all()
-    )
+    # Paused habits – hide them when searching
+    if search_query:
+        paused_habits = []
+    else:
+        paused_habits = (
+            Habit.query.filter_by(is_archived=False, is_paused=True)
+            .order_by(Habit.paused_at.desc())
+            .all()
+        )
 
     # Build category list for filter: default CATEGORIES + any custom ones in DB
     db_categories = {
@@ -202,9 +235,8 @@ def habit_tracker():
         filter_categories=filter_categories,
         current_categories=category_filters,   # list of selected categories
         current_priorities=priority_filters,   # list of selected priority levels
+        search_query=search_query,  # NEW: Pass search query to template
     )
-
-
 
 
 @app.route("/habit-tracker/delete/<int:habit_id>", methods=["POST"])

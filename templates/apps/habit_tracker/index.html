@@ -97,7 +97,7 @@
         border-color: rgba(250, 204, 21, 0.3);
     }
 
-        /* Dark mode for filter panel background + border */
+    /* Dark mode for filter panel background + border */
     [data-theme="dark"] .bg-gray-50 {
         background-color: var(--bg-secondary);
     }
@@ -174,7 +174,6 @@
             </div>
         </div>
 
-        
         {% if habits %}
         <button onclick="openShareModal()"
             class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-md hover:shadow-lg">
@@ -271,146 +270,154 @@
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div class="flex items-center justify-between mb-6">
+        <!-- Header row -->
+        <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-2">
                 <span class="text-xl">📊</span>
                 <h3 class="text-lg font-semibold text-gray-900">Your Progress</h3>
             </div>
-                                  <div class="flex items-center gap-3">
-        {% if habits %}
-            <span class="text-sm text-gray-500">
-                {{ habits|length }} habit{{ 's' if habits|length != 1 else '' }}
-            </span>
+            <div class="flex items-center gap-3">
+                {% if habits %}
+                    <span class="text-sm text-gray-500">
+                        {{ habits|length }} habit{{ 's' if habits|length != 1 else '' }}
+                    </span>
 
-            <!-- 🔹 Sort dropdown (same behavior as develop) -->
-            <div class="relative">
-                <select id="sortSelect"
-                        onchange="window.location.href='?sort=' + this.value"
-                        class="text-sm px-3 py-1.5 border border-gray-200 rounded-lg bg-white hover:border-purple-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 cursor-pointer appearance-none pr-8">
-                    <option value="priority" {% if current_sort == 'priority' or not current_sort %}selected{% endif %}>
-                        Sort: Priority
-                    </option>
-                    <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>
-                        Sort: Newest First
-                    </option>
-                    <option value="oldest" {% if current_sort == 'oldest' %}selected{% endif %}>
-                        Sort: Oldest First
-                    </option>
-                    <option value="az" {% if current_sort == 'az' %}selected{% endif %}>
-                        Sort: A-Z
-                    </option>
-                    <option value="za" {% if current_sort == 'za' %}selected{% endif %}>
-                        Sort: Z-A
-                    </option>
-                </select>
-                <svg class="w-4 h-4 absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400"
-                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M19 9l-7 7-7-7"></path>
-                </svg>
+                    <!-- Sort dropdown -->
+                    <div class="relative">
+                        <select id="sortSelect"
+                                onchange="window.location.href='?sort=' + this.value"
+                                class="text-sm px-3 py-1.5 border border-gray-200 rounded-lg bg-white hover:border-purple-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 cursor-pointer appearance-none pr-8">
+                            <option value="priority" {% if current_sort == 'priority' or not current_sort %}selected{% endif %}>Sort: Priority</option>
+                            <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Sort: Newest First</option>
+                            <option value="oldest" {% if current_sort == 'oldest' %}selected{% endif %}>Sort: Oldest First</option>
+                            <option value="az" {% if current_sort == 'az' %}selected{% endif %}>Sort: A-Z</option>
+                            <option value="za" {% if current_sort == 'za' %}selected{% endif %}>Sort: Z-A</option>
+                        </select>
+                        <svg class="w-4 h-4 absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400"
+                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                {% endif %}
+
+                <!-- Filter button  -->
+                <button type="button"
+                        onclick="toggleFilterPanel()"
+                        class="flex items-center gap-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-700 bg-white hover:border-purple-300 hover:text-purple-700 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M3 4a1 1 0 011-1h16a1 1 0 01.8 1.6L15 12.25V19a1 1 0 01-1.447.894l-3-1.5A1 1 0 0110 17.5v-5.25L3.2 5.6A1 1 0 013 4z" />
+                    </svg>
+                    <span>Filter</span>
+                </button>
+
+                <a href="/habit-tracker/archived"
+                   class="text-sm text-purple-600 hover:text-purple-700 underline font-medium">
+                    View Archived
+                </a>
             </div>
+        </div>
+
+        <!-- Search bar on its own row -->
+        {% if habits %}
+        <div class="mb-4">
+            <form method="GET" action="/habit-tracker" class="flex gap-2">
+                <input
+                    type="text"
+                    name="search"
+                    value="{{ search_query or '' }}"
+                    placeholder="🔍 Search habits by name, description, or category..."
+                    class="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                    autocomplete="off">
+                <button type="submit"
+                        class="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-md">
+                    Search
+                </button>
+                {% if search_query %}
+                    <a href="/habit-tracker"
+                       class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all duration-200 font-medium">
+                        Clear
+                    </a>
+                {% endif %}
+            </form>
+        </div>
         {% endif %}
 
-        <!-- 🔹 Filter button stays -->
-        <button type="button"
-                onclick="toggleFilterPanel()"
-                class="flex items-center gap-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-700 bg-white hover:border-purple-300 hover:text-purple-700 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M3 4a1 1 0 011-1h16a1 1 0 01.8 1.6L15 12.25V19a1 1 0 01-1.447.894l-3-1.5A1 1 0 0110 17.5v-5.25L3.2 5.6A1 1 0 013 4z" />
-            </svg>
-            <span>Filter</span>
-        </button>
+        <!-- Filter panel: Category + Priority checkboxes -->
+        <div id="filterPanel" class="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50 hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Category filters -->
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Category</h4>
+                    <div class="space-y-1 text-sm text-gray-700">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox"
+                                name="category_filter"
+                                value="all"
+                                {% if not current_categories %}checked{% endif %}>
+                            <span>All categories</span>
+                        </label>
+                        {% for cat in filter_categories %}
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox"
+                                name="category_filter"
+                                value="{{ cat }}"
+                                {% if cat in current_categories %}checked{% endif %}>
+                            <span>{{ cat }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
 
-        <a href="/habit-tracker/archived"
-           class="text-sm text-purple-600 hover:text-purple-700 underline font-medium">
-            View Archived
-        </a>
-    </div>
+                <!-- Priority level filters -->
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Priority level</h4>
+                    <div class="space-y-1 text-sm text-gray-700">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox"
+                                name="priority_filter"
+                                value="all"
+                                {% if not current_priorities %}checked{% endif %}>
+                            <span>All priorities</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox"
+                                name="priority_filter"
+                                value="High"
+                                {% if 'High' in current_priorities %}checked{% endif %}>
+                            <span>High</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox"
+                                name="priority_filter"
+                                value="Medium"
+                                {% if 'Medium' in current_priorities %}checked{% endif %}>
+                            <span>Medium</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox"
+                                name="priority_filter"
+                                value="Low"
+                                {% if 'Low' in current_priorities %}checked{% endif %}>
+                            <span>Low</span>
+                        </label>
+                    </div>
+                </div>
 
-
-    </div>
-
-    <!-- 🔹 Filter panel: Category + Priority checkboxes -->
-    <div id="filterPanel" class="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50 hidden">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Category filters -->
-        <div>
-            <h4 class="text-sm font-semibold text-gray-700 mb-2">Category</h4>
-            <div class="space-y-1 text-sm text-gray-700">
-                <label class="flex items-center gap-2">
-                    <input type="checkbox"
-                        name="category_filter"
-                        value="all"
-                        {% if not current_categories %}checked{% endif %}>
-                    <span>All categories</span>
-                </label>
-                {% for cat in filter_categories %}
-                <label class="flex items-center gap-2">
-                    <input type="checkbox"
-                        name="category_filter"
-                        value="{{ cat }}"
-                        {% if cat in current_categories %}checked{% endif %}>
-                    <span>{{ cat }}</span>
-                </label>
-                {% endfor %}
+                <div class="mt-4 flex items-center justify-end gap-3 md:col-span-2">
+                    <button type="button"
+                            onclick="clearFilters"
+                            class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800">
+                        Clear
+                    </button>
+                    <button type="button"
+                            onclick="applyFilters()"
+                            class="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                        Apply filters
+                    </button>
+                </div>
             </div>
         </div>
-
-
-            <!-- Priority level filters -->
-    <div>
-        <h4 class="text-sm font-semibold text-gray-700 mb-2">Priority level</h4>
-        <div class="space-y-1 text-sm text-gray-700">
-            <label class="flex items-center gap-2">
-                <input type="checkbox"
-                    name="priority_filter"
-                    value="all"
-                    {% if not current_priorities %}checked{% endif %}>
-                <span>All priorities</span>
-            </label>
-            <label class="flex items-center gap-2">
-                <input type="checkbox"
-                    name="priority_filter"
-                    value="High"
-                    {% if 'High' in current_priorities %}checked{% endif %}>
-                <span>High</span>
-            </label>
-            <label class="flex items-center gap-2">
-                <input type="checkbox"
-                    name="priority_filter"
-                    value="Medium"
-                    {% if 'Medium' in current_priorities %}checked{% endif %}>
-                <span>Medium</span>
-            </label>
-            <label class="flex items-center gap-2">
-                <input type="checkbox"
-                    name="priority_filter"
-                    value="Low"
-                    {% if 'Low' in current_priorities %}checked{% endif %}>
-                <span>Low</span>
-            </label>
-        </div>
-    </div>
-
-
-        <div class="mt-4 flex items-center justify-end gap-3">
-            <button type="button"
-                    onclick="clearFilters()"
-                    class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800">
-                Clear
-            </button>
-            <button type="button"
-                    onclick="applyFilters()"
-                    class="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-                Apply filters
-            </button>
-        </div>
-    </div>
-
-    </div>
-
-
 
         {% if habits %}
             <div class="space-y-3 max-h-96 overflow-y-auto">
@@ -440,7 +447,6 @@
                                 {{ habit.created_at.strftime('%b %d') }}
                             </span>
 
-                            
                             <button type="button"
                                 class="text-purple-400 hover:text-purple-600 transition-colors duration-200 opacity-0 group-hover:opacity-100 habit-edit-btn-{{ habit.id }}"
                                 onclick="toggleEditMode({{ habit.id }})"
@@ -466,7 +472,6 @@
                                 </svg>
                             </button>
 
-                            
                             <form method="POST" action="/habit-tracker/pause/{{ habit.id }}" class="inline">
                                 <button type="submit"
                                     class="text-yellow-400 hover:text-yellow-600 transition-colors duration-200 opacity-0 group-hover:opacity-100"
@@ -477,7 +482,6 @@
                                 </button>
                             </form>
 
-                          
                             <form method="POST" action="/habit-tracker/archive/{{ habit.id }}" class="inline">
                                 <button type="submit"
                                     class="text-blue-400 hover:text-blue-600 transition-colors duration-200 opacity-0 group-hover:opacity-100"
@@ -488,7 +492,6 @@
                                 </button>
                             </form>
 
-                            
                             <form method="POST" action="/habit-tracker/delete/{{ habit.id }}" class="inline">
                                 <button type="submit"
                                     class="text-red-400 hover:text-red-600 transition-colors duration-200 opacity-0 group-hover:opacity-100"
@@ -540,15 +543,26 @@
         {% else %}
             <div class="text-center py-12">
                 <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full mb-4">
-                    <span class="text-2xl">🌱</span>
+                    {% if search_query %}
+                        <span class="text-2xl">🔍</span>
+                    {% else %}
+                        <span class="text-2xl">🌱</span>
+                    {% endif %}
                 </div>
-                <p class="text-gray-500 mb-2">No habits yet</p>
-                <p class="text-sm text-gray-400">Plant your first habit seed and watch it grow into a consistent routine.</p>
+                {% if search_query %}
+                    <p class="text-gray-500 mb-2">No habits found</p>
+                    <p class="text-sm text-gray-400">No habits match "{{ search_query }}"</p>
+                    <a href="/habit-tracker" class="inline-block mt-4 text-purple-600 hover:text-purple-700 underline">
+                        Clear search and view all habits
+                    </a>
+                {% else %}
+                    <p class="text-gray-500 mb-2">No habits yet</p>
+                    <p class="text-sm text-gray-400">Plant your first habit seed and watch it grow into a consistent routine.</p>
+                {% endif %}
             </div>
         {% endif %}
     </div>
 </div>
-
 
 {% if paused_habits %}
 <div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -619,7 +633,6 @@
     </div>
 </div>
 
-
 <div id="shareModal" class="modal">
     <div class="modal-content">
         <div class="flex items-center justify-between mb-4">
@@ -651,7 +664,6 @@
     </div>
 </div>
 
-
 <script>
   (function () {
     const selectEl = document.getElementById('habit-category');
@@ -676,7 +688,6 @@
     toggleCustom();
   })();
 
- 
   function toggleEditMode(habitId) {
     const nameDisplay = document.querySelector('.habit-name-display-' + habitId);
     const editForm = document.querySelector('.habit-edit-form-' + habitId);
@@ -714,7 +725,6 @@
     editForm.submit();
   }
 </script>
-
 
 <script>
 function openShareModal() {
@@ -815,6 +825,5 @@ document.getElementById('shareModal').addEventListener('click', function(e) {
     window.location.href = url.pathname; // reset to defaults
   }
 </script>
-
 
 {% endblock %}

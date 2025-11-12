@@ -1052,3 +1052,258 @@ def test_disable_tips_endpoint(logged_in_client, app):
         prefs = db.session.get(UserPreferences, email)
         assert prefs is not None
         assert prefs.has_seen_tutorial is True
+
+
+
+# Search Habits Tests 
+
+
+def test_search_habits_by_name(logged_in_client, app):
+    """Test searching habits by name returns only matching habits."""
+    # Arrange: Create test habits
+    with app.app_context():
+        habit1 = Habit(name="Morning Exercise", description="Daily workout", category="Fitness")
+        habit2 = Habit(name="Evening Reading", description="Read books", category="Study")
+        habit3 = Habit(name="Exercise Routine", description="Gym session", category="Fitness")
+        db.session.add_all([habit1, habit2, habit3])
+        db.session.commit()
+
+    # Act: Search for "Exercise"
+    response = logged_in_client.get("/habit-tracker?search=Exercise")
+    html = response.data.decode("utf-8")
+
+    # Assert: Only habits with "Exercise" in name should appear
+    assert response.status_code == 200
+    assert "Morning Exercise" in html
+    assert "Exercise Routine" in html
+    assert "Evening Reading" not in html
+
+
+def test_search_habits_by_description(logged_in_client, app):
+    """Test searching habits by description returns matching habits."""
+    # Arrange: Create test habits
+    with app.app_context():
+        habit1 = Habit(name="Morning Routine", description="Daily workout session", category="Health")
+        habit2 = Habit(name="Reading Time", description="Read programming books", category="Study")
+        habit3 = Habit(name="Study Session", description="Learn new skills", category="Study")
+        db.session.add_all([habit1, habit2, habit3])
+        db.session.commit()
+
+    # Act: Search for "workout"
+    response = logged_in_client.get("/habit-tracker?search=workout")
+    html = response.data.decode("utf-8")
+
+    # Assert: Only habit with "workout" in description should appear
+    assert response.status_code == 200
+    assert "Morning Routine" in html
+    assert "Reading Time" not in html
+    assert "Study Session" not in html
+
+
+def test_search_habits_by_category(logged_in_client, app):
+    """Test searching habits by category returns matching habits."""
+    # Arrange: Create test habits with different categories
+    with app.app_context():
+        habit1 = Habit(name="Gym Session", description="Weight training", category="Fitness")
+        habit2 = Habit(name="Study Time", description="Learn coding", category="Study")
+        habit3 = Habit(name="Morning Run", description="Cardio exercise", category="Fitness")
+        db.session.add_all([habit1, habit2, habit3])
+        db.session.commit()
+
+    # Act: Search for "Fitness"
+    response = logged_in_client.get("/habit-tracker?search=Fitness")
+    html = response.data.decode("utf-8")
+
+    # Assert: Only Fitness habits should appear
+    assert response.status_code == 200
+    assert "Gym Session" in html
+    assert "Morning Run" in html
+    assert "Study Time" not in html
+
+
+def test_search_habits_case_insensitive(logged_in_client, app):
+    """Test that search is case-insensitive."""
+    # Arrange: Create test habit
+    with app.app_context():
+        habit = Habit(name="Morning MEDITATION", description="Daily practice", category="Mindfulness")
+        db.session.add(habit)
+        db.session.commit()
+
+    # Act: Search with lowercase
+    response = logged_in_client.get("/habit-tracker?search=meditation")
+    html = response.data.decode("utf-8")
+
+    # Assert: Should find the habit despite case difference
+    assert response.status_code == 200
+    assert "Morning MEDITATION" in html
+
+
+def test_search_habits_no_results(logged_in_client, app):
+    """Test search with no matching results shows appropriate message."""
+    # Arrange: Create some habits
+    with app.app_context():
+        habit = Habit(name="Morning Yoga", description="Stretching routine", category="Health")
+        db.session.add(habit)
+        db.session.commit()
+
+    # Act: Search for something that doesn't exist
+    response = logged_in_client.get("/habit-tracker?search=NonExistentHabit")
+    html = response.data.decode("utf-8")
+
+    # Assert: Should show "no results" message
+    assert response.status_code == 200
+    assert ("No habits found" in html or "No habits yet" in html)
+    assert "Morning Yoga" not in html
+
+
+def test_search_habits_empty_query_shows_all(logged_in_client, app):
+    """Test that empty search query shows all habits."""
+    # Arrange: Create test habits
+    with app.app_context():
+        habit1 = Habit(name="Habit One", description="First habit", category="Health")
+        habit2 = Habit(name="Habit Two", description="Second habit", category="Fitness")
+        db.session.add_all([habit1, habit2])
+        db.session.commit()
+
+    # Act: Search with empty query
+    response = logged_in_client.get("/habit-tracker?search=")
+    html = response.data.decode("utf-8")
+
+    # Assert: Should show all habits
+    assert response.status_code == 200
+    assert "Habit One" in html
+    assert "Habit Two" in html
+
+
+def test_search_habits_with_special_characters(logged_in_client, app):
+    """Test that search handles special characters correctly."""
+    # Arrange: Create habit with special characters
+    with app.app_context():
+        habit = Habit(name="C++ Programming", description="Learn C++", category="Study")
+        db.session.add(habit)
+        db.session.commit()
+
+    # Act: Search for the special characters
+    response = logged_in_client.get("/habit-tracker?search=C++")
+    html = response.data.decode("utf-8")
+
+    # Assert: Should find the habit
+    assert response.status_code == 200
+    assert "C++ Programming" in html
+
+
+def test_search_excludes_archived_habits(logged_in_client, app):
+    """Test that search does not return archived habits."""
+    # Arrange: Create both active and archived habits
+    from datetime import datetime, timezone
+
+    with app.app_context():
+        active_habit = Habit(name="Active Exercise", description="Daily workout", is_archived=False)
+        archived_habit = Habit(
+            name="Archived Exercise",
+            description="Old workout",
+            is_archived=True,
+            archived_at=datetime.now(timezone.utc),
+        )
+        db.session.add_all([active_habit, archived_habit])
+        db.session.commit()
+
+    # Act: Search for "Exercise"
+    response = logged_in_client.get("/habit-tracker?search=Exercise")
+    html = response.data.decode("utf-8")
+
+    # Assert: Only active habit should appear
+    assert response.status_code == 200
+    assert "Active Exercise" in html
+    assert "Archived Exercise" not in html
+
+
+def test_search_excludes_paused_habits(logged_in_client, app):
+    """Test that search does not return paused habits."""
+    # Arrange: Create both active and paused habits
+    from datetime import datetime, timezone
+
+    with app.app_context():
+        active_habit = Habit(name="Active Yoga", description="Daily practice", is_paused=False)
+        paused_habit = Habit(
+            name="Paused Yoga",
+            description="On hold",
+            is_paused=True,
+            paused_at=datetime.now(timezone.utc),
+        )
+        db.session.add_all([active_habit, paused_habit])
+        db.session.commit()
+
+    # Act: Search for "Yoga"
+    response = logged_in_client.get("/habit-tracker?search=Yoga")
+    html = response.data.decode("utf-8")
+
+    # Assert: Only active habit should appear
+    assert response.status_code == 200
+    assert "Active Yoga" in html
+    assert "Paused Yoga" not in html
+
+
+def test_search_works_with_other_filters(logged_in_client, app):
+    """Test that search can be combined with category and priority filters."""
+    # Arrange: Create various habits
+    with app.app_context():
+        habit1 = Habit(name="High Priority Exercise", description="Gym", category="Fitness", priority="High")
+        habit2 = Habit(name="Low Priority Exercise", description="Walk", category="Fitness", priority="Low")
+        habit3 = Habit(name="High Priority Study", description="Read", category="Study", priority="High")
+        db.session.add_all([habit1, habit2, habit3])
+        db.session.commit()
+
+    # Act: Search for "Exercise" with High priority filter
+    response = logged_in_client.get("/habit-tracker?search=Exercise&priority=High")
+    html = response.data.decode("utf-8")
+
+    # Assert: Only high priority exercise habit should appear
+    assert response.status_code == 200
+    assert "High Priority Exercise" in html
+    assert "Low Priority Exercise" not in html
+    assert "High Priority Study" not in html
+
+
+def test_search_bar_displays_search_query(logged_in_client, app):
+    """Test that the search bar retains the search query value."""
+    # Arrange: Create a habit
+    with app.app_context():
+        habit = Habit(name="Test Habit", description="Test", category="Health")
+        db.session.add(habit)
+        db.session.commit()
+
+    # Act: Perform a search
+    response = logged_in_client.get("/habit-tracker?search=Test")
+    html = response.data.decode("utf-8")
+
+    # Assert: Search input should contain the search term
+    assert response.status_code == 200
+    assert 'value="Test"' in html or "Test" in html
+
+
+def test_search_clear_button_appears_when_searching(logged_in_client, app):
+    """Test that clear button appears when there is a search query."""
+    # Arrange: Create a habit
+    with app.app_context():
+        habit = Habit(name="Test Habit", description="Test", category="Health")
+        db.session.add(habit)
+        db.session.commit()
+
+    # Act: Perform a search
+    response = logged_in_client.get("/habit-tracker?search=Test")
+    html = response.data.decode("utf-8")
+
+    # Assert: Clear button should be present
+    assert response.status_code == 200
+    assert "Clear" in html
+
+
+def test_search_requires_authentication(client):
+    """Test that search functionality requires authentication."""
+    # Act: Try to search without being logged in
+    response = client.get("/habit-tracker?search=Exercise", follow_redirects=False)
+
+    # Assert: Should redirect to signin
+    assert response.status_code == 302
+    assert response.location == "/signin"
