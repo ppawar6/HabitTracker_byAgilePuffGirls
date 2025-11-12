@@ -1307,3 +1307,237 @@ def test_search_requires_authentication(client):
     # Assert: Should redirect to signin
     assert response.status_code == 302
     assert response.location == "/signin"
+
+  
+#  Export Habits to CSV Tests
+
+
+
+def test_export_csv_returns_csv_file(logged_in_client, app):
+    """Test that GET /habit-tracker/export/csv returns a CSV file."""
+    # Arrange: Create test habits
+    with app.app_context():
+        habit1 = Habit(name="Morning Exercise", description="Daily workout", category="Fitness", priority="High")
+        habit2 = Habit(name="Evening Reading", description="Read books", category="Study", priority="Medium")
+        db.session.add_all([habit1, habit2])
+        db.session.commit()
+
+    # Act: Request CSV export
+    response = logged_in_client.get("/habit-tracker/export/csv")
+
+    # Assert: Check response is CSV
+    assert response.status_code == 200
+    assert response.mimetype == 'text/csv'
+    assert 'attachment' in response.headers.get('Content-Disposition', '')
+    assert 'habits_export_' in response.headers.get('Content-Disposition', '')
+
+
+def test_export_csv_contains_correct_headers(logged_in_client, app):
+    """Test that exported CSV has correct column headers."""
+    # Arrange: Create a habit
+    with app.app_context():
+        habit = Habit(name="Test Habit", description="Test", category="Health", priority="Low")
+        db.session.add(habit)
+        db.session.commit()
+
+    # Act: Request CSV export
+    response = logged_in_client.get("/habit-tracker/export/csv")
+    csv_data = response.data.decode('utf-8')
+
+    # Assert: Check headers
+    assert response.status_code == 200
+    assert 'Name,Description,Category,Priority,Created Date,Status' in csv_data
+
+
+def test_export_csv_contains_habit_data(logged_in_client, app):
+    """Test that exported CSV contains habit data."""
+    # Arrange: Create test habits
+    with app.app_context():
+        habit1 = Habit(name="Morning Yoga", description="Stretch routine", category="Fitness", priority="High")
+        habit2 = Habit(name="Study Python", description="Learn coding", category="Study", priority="Medium")
+        db.session.add_all([habit1, habit2])
+        db.session.commit()
+
+    # Act: Request CSV export
+    response = logged_in_client.get("/habit-tracker/export/csv")
+    csv_data = response.data.decode('utf-8')
+
+    # Assert: Check habit data is present
+    assert response.status_code == 200
+    assert 'Morning Yoga' in csv_data
+    assert 'Stretch routine' in csv_data
+    assert 'Fitness' in csv_data
+    assert 'High' in csv_data
+    assert 'Study Python' in csv_data
+    assert 'Learn coding' in csv_data
+    assert 'Study' in csv_data
+    assert 'Medium' in csv_data
+    assert 'Active' in csv_data
+
+
+def test_export_csv_excludes_archived_habits(logged_in_client, app):
+    """Test that exported CSV does not include archived habits."""
+    # Arrange: Create active and archived habits
+    from datetime import datetime, timezone
+
+    with app.app_context():
+        active_habit = Habit(name="Active Habit", description="Active", category="Health", is_archived=False)
+        archived_habit = Habit(
+            name="Archived Habit",
+            description="Archived",
+            category="Study",
+            is_archived=True,
+            archived_at=datetime.now(timezone.utc)
+        )
+        db.session.add_all([active_habit, archived_habit])
+        db.session.commit()
+
+    # Act: Request CSV export
+    response = logged_in_client.get("/habit-tracker/export/csv")
+    csv_data = response.data.decode('utf-8')
+
+    # Assert: Only active habit should be in CSV
+    assert response.status_code == 200
+    assert 'Active Habit' in csv_data
+    assert 'Archived Habit' not in csv_data
+
+
+def test_export_csv_excludes_paused_habits(logged_in_client, app):
+    """Test that exported CSV does not include paused habits."""
+    # Arrange: Create active and paused habits
+    from datetime import datetime, timezone
+
+    with app.app_context():
+        active_habit = Habit(name="Active Habit", description="Active", category="Health", is_paused=False)
+        paused_habit = Habit(
+            name="Paused Habit",
+            description="Paused",
+            category="Fitness",
+            is_paused=True,
+            paused_at=datetime.now(timezone.utc)
+        )
+        db.session.add_all([active_habit, paused_habit])
+        db.session.commit()
+
+    # Act: Request CSV export
+    response = logged_in_client.get("/habit-tracker/export/csv")
+    csv_data = response.data.decode('utf-8')
+
+    # Assert: Only active habit should be in CSV
+    assert response.status_code == 200
+    assert 'Active Habit' in csv_data
+    assert 'Paused Habit' not in csv_data
+
+
+def test_export_csv_handles_empty_fields(logged_in_client, app):
+    """Test that CSV export handles habits with missing optional fields."""
+    # Arrange: Create habit with minimal data
+    with app.app_context():
+        habit = Habit(name="Minimal Habit")  # No description, category, or priority
+        db.session.add(habit)
+        db.session.commit()
+
+    # Act: Request CSV export
+    response = logged_in_client.get("/habit-tracker/export/csv")
+    csv_data = response.data.decode('utf-8')
+
+    # Assert: Should handle empty fields gracefully
+    assert response.status_code == 200
+    assert 'Minimal Habit' in csv_data
+    # Should have default values for missing fields
+    assert 'Uncategorized' in csv_data or ',,' in csv_data
+    assert 'Medium' in csv_data  # Default priority
+
+
+def test_export_csv_requires_authentication(client):
+    """Test that CSV export requires authentication."""
+    # Act: Try to export without being logged in
+    response = client.get("/habit-tracker/export/csv", follow_redirects=False)
+
+    # Assert: Should redirect to signin
+    assert response.status_code == 302
+    assert response.location == "/signin"
+
+
+def test_export_csv_filename_has_timestamp(logged_in_client, app):
+    """Test that exported CSV filename includes timestamp."""
+    # Arrange: Create a habit
+    with app.app_context():
+        habit = Habit(name="Test Habit", description="Test")
+        db.session.add(habit)
+        db.session.commit()
+
+    # Act: Request CSV export
+    response = logged_in_client.get("/habit-tracker/export/csv")
+
+    # Assert: Check filename format
+    assert response.status_code == 200
+    content_disposition = response.headers.get('Content-Disposition', '')
+    assert 'habits_export_' in content_disposition
+    assert '.csv' in content_disposition
+
+
+def test_export_csv_with_no_habits(logged_in_client):
+    """Test CSV export when user has no habits."""
+    # Act: Request CSV export with no habits
+    response = logged_in_client.get("/habit-tracker/export/csv")
+    csv_data = response.data.decode('utf-8')
+
+    # Assert: Should return CSV with just headers
+    assert response.status_code == 200
+    assert 'Name,Description,Category,Priority,Created Date,Status' in csv_data
+    # Should only have header row (no data rows)
+    lines = csv_data.strip().split('\n')
+    assert len(lines) == 1  # Only header line
+
+
+def test_export_csv_multiple_habits_different_categories(logged_in_client, app):
+    """Test CSV export with multiple habits across different categories."""
+    # Arrange: Create diverse habits
+    with app.app_context():
+        habits = [
+            Habit(name="Gym", description="Weight training", category="Fitness", priority="High"),
+            Habit(name="Meditate", description="10 minutes", category="Mindfulness", priority="Medium"),
+            Habit(name="Code", description="Practice Python", category="Productivity", priority="High"),
+            Habit(name="Read", description="30 pages", category="Study", priority="Low"),
+        ]
+        db.session.add_all(habits)
+        db.session.commit()
+
+    # Act: Request CSV export
+    response = logged_in_client.get("/habit-tracker/export/csv")
+    csv_data = response.data.decode('utf-8')
+
+    # Assert: All habits should be in export
+    assert response.status_code == 200
+    assert 'Gym' in csv_data
+    assert 'Meditate' in csv_data
+    assert 'Code' in csv_data
+    assert 'Read' in csv_data
+    assert 'Fitness' in csv_data
+    assert 'Mindfulness' in csv_data
+    assert 'Productivity' in csv_data
+    assert 'Study' in csv_data
+
+
+def test_export_csv_special_characters_in_data(logged_in_client, app):
+    """Test that CSV export handles special characters correctly."""
+    # Arrange: Create habit with special characters
+    with app.app_context():
+        habit = Habit(
+            name='Habit "with" quotes',
+            description="Description, with, commas",
+            category="Test",
+            priority="High"
+        )
+        db.session.add(habit)
+        db.session.commit()
+
+    # Act: Request CSV export
+    response = logged_in_client.get("/habit-tracker/export/csv")
+
+    # Assert: Should handle special characters
+    assert response.status_code == 200
+    # CSV should be parseable despite special characters
+    assert response.mimetype == 'text/csv'
+
