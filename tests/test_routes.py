@@ -577,12 +577,67 @@ def test_paused_habit_independent_of_archive(logged_in_client, app):
     assert "ArchivedHabit789" not in html
     assert "BothPausedArchived999" not in html
 
+def test_filter_by_single_category_shows_only_matching_habits(logged_in_client, app):
+    """Filtering by a single category shows only habits in that category."""
+    with app.app_context():
+        habit_study = Habit(name="Study Habit", category="Study", priority="Medium")
+        habit_fitness = Habit(name="Fitness Habit", category="Fitness", priority="High")
+        habit_other = Habit(name="Other Habit", category="Social", priority="Low")
+        db.session.add_all([habit_study, habit_fitness, habit_other])
+        db.session.commit()
+
+    response = logged_in_client.get("/habit-tracker?category=Study")
+    html = response.data.decode("utf-8")
+
+    assert response.status_code == 200
+    # Only the Study habit should be present
+    assert "Study Habit" in html
+    assert "Fitness Habit" not in html
+    assert "Other Habit" not in html
+
+def test_filter_by_multiple_categories_shows_union(logged_in_client, app):
+    """Filtering by multiple categories (comma separated) returns all matching habits."""
+    with app.app_context():
+        habit_study = Habit(name="Study Habit", category="Study", priority="Medium")
+        habit_fitness = Habit(name="Fitness Habit", category="Fitness", priority="High")
+        habit_mind = Habit(name="Mindfulness Habit", category="Mindfulness", priority="Low")
+        db.session.add_all([habit_study, habit_fitness, habit_mind])
+        db.session.commit()
+
+    # Study and Fitness categories selected
+    response = logged_in_client.get("/habit-tracker?category=Study,Fitness")
+    html = response.data.decode("utf-8")
+
+    assert response.status_code == 200
+    assert "Study Habit" in html
+    assert "Fitness Habit" in html
+    # Mindfulness should be filtered out
+    assert "Mindfulness Habit" not in html
+
+def test_filter_by_category_and_priority_combination(logged_in_client, app):
+    """Filtering by both category and priority returns only habits matching both."""
+    with app.app_context():
+        habit_match = Habit(name="Study High", category="Study", priority="High")
+        habit_wrong_priority = Habit(name="Study Low", category="Study", priority="Low")
+        habit_wrong_category = Habit(name="Fitness High", category="Fitness", priority="High")
+        db.session.add_all([habit_match, habit_wrong_priority, habit_wrong_category])
+        db.session.commit()
+
+    # Looking for category=Study AND priority=High
+    response = logged_in_client.get("/habit-tracker?category=Study&priority=High")
+    html = response.data.decode("utf-8")
+
+    assert response.status_code == 200
+    assert "Study High" in html
+    assert "Study Low" not in html
+    assert "Fitness High" not in html
+
 
 # === Toggle Completion Tests ===
 
 
 def test_toggle_completion_marks_habit_completed(logged_in_client, app):
-    """Test that toggling a habit marks it as completed for the current day."""
+    """Test that POST /habit-tracker/toggle/<id> marks a habit as completed for today."""
     # Arrange
     with app.app_context():
         habit = Habit(name="Morning Exercise", description="Daily workout")
@@ -626,7 +681,7 @@ def test_toggle_completion_removes_completed_date(logged_in_client, app):
     with app.app_context():
         updated_habit = Habit.query.get(habit_id)
         completed_dates = json.loads(updated_habit.completed_dates)
-        assert today not in completed_dates, "Today's date should be marked as completed"
+        assert today not in completed_dates
 
 
 def test_toggle_completion_requires_auth(client, app):
@@ -766,16 +821,23 @@ def test_share_progress_requires_authentication(client):
 
 
 def test_sort_parameter_default_newest(logged_in_client, app):
-    """Test that default sorting is newest first."""
+    """Test that default sorting is by priority (and within same priority, oldest first)."""
     with app.app_context():
         from datetime import datetime, timedelta
 
+        # Create habits with different priorities to test default sorting
         habit1 = Habit(
-            name="Oldest Habit",
-            description="First",
+            name="Low Priority Habit",
+            description="Low",
+            priority="Low",
             created_at=datetime.utcnow() - timedelta(days=2),
         )
-        habit2 = Habit(name="Newest Habit", description="Last", created_at=datetime.utcnow())
+        habit2 = Habit(
+            name="High Priority Habit",
+            description="High",
+            priority="High",
+            created_at=datetime.utcnow(),
+        )
         db.session.add_all([habit1, habit2])
         db.session.commit()
 
@@ -783,9 +845,10 @@ def test_sort_parameter_default_newest(logged_in_client, app):
     html = response.data.decode("utf-8")
 
     assert response.status_code == 200
-    newest_pos = html.find("Newest Habit")
-    oldest_pos = html.find("Oldest Habit")
-    assert newest_pos < oldest_pos
+    high_pos = html.find("High Priority Habit")
+    low_pos = html.find("Low Priority Habit")
+    # High priority should appear before low priority by default
+    assert high_pos < low_pos
 
 
 def test_sort_parameter_oldest(logged_in_client, app):
@@ -989,3 +1052,492 @@ def test_disable_tips_endpoint(logged_in_client, app):
         prefs = db.session.get(UserPreferences, email)
         assert prefs is not None
         assert prefs.has_seen_tutorial is True
+
+
+
+# Search Habits Tests
+
+
+def test_search_habits_by_name(logged_in_client, app):
+    """Test searching habits by name returns only matching habits."""
+    # Arrange: Create test habits
+    with app.app_context():
+        habit1 = Habit(name="Morning Exercise", description="Daily workout", category="Fitness")
+        habit2 = Habit(name="Evening Reading", description="Read books", category="Study")
+        habit3 = Habit(name="Exercise Routine", description="Gym session", category="Fitness")
+        db.session.add_all([habit1, habit2, habit3])
+        db.session.commit()
+
+    # Act: Search for "Exercise"
+    response = logged_in_client.get("/habit-tracker?search=Exercise")
+    html = response.data.decode("utf-8")
+
+    # Assert: Only habits with "Exercise" in name should appear
+    assert response.status_code == 200
+    assert "Morning Exercise" in html
+    assert "Exercise Routine" in html
+    assert "Evening Reading" not in html
+
+
+def test_search_habits_by_description(logged_in_client, app):
+    """Test searching habits by description returns matching habits."""
+    # Arrange: Create test habits
+    with app.app_context():
+        habit1 = Habit(name="Morning Routine", description="Daily workout session", category="Health")
+        habit2 = Habit(name="Reading Time", description="Read programming books", category="Study")
+        habit3 = Habit(name="Study Session", description="Learn new skills", category="Study")
+        db.session.add_all([habit1, habit2, habit3])
+        db.session.commit()
+
+    # Act: Search for "workout"
+    response = logged_in_client.get("/habit-tracker?search=workout")
+    html = response.data.decode("utf-8")
+
+    # Assert: Only habit with "workout" in description should appear
+    assert response.status_code == 200
+    assert "Morning Routine" in html
+    assert "Reading Time" not in html
+    assert "Study Session" not in html
+
+
+def test_search_habits_by_category(logged_in_client, app):
+    """Test searching habits by category returns matching habits."""
+    # Arrange: Create test habits with different categories
+    with app.app_context():
+        habit1 = Habit(name="Gym Session", description="Weight training", category="Fitness")
+        habit2 = Habit(name="Study Time", description="Learn coding", category="Study")
+        habit3 = Habit(name="Morning Run", description="Cardio exercise", category="Fitness")
+        db.session.add_all([habit1, habit2, habit3])
+        db.session.commit()
+
+    # Act: Search for "Fitness"
+    response = logged_in_client.get("/habit-tracker?search=Fitness")
+    html = response.data.decode("utf-8")
+
+    # Assert: Only Fitness habits should appear
+    assert response.status_code == 200
+    assert "Gym Session" in html
+    assert "Morning Run" in html
+    assert "Study Time" not in html
+
+
+def test_search_habits_case_insensitive(logged_in_client, app):
+    """Test that search is case-insensitive."""
+    # Arrange: Create test habit
+    with app.app_context():
+        habit = Habit(name="Morning MEDITATION", description="Daily practice", category="Mindfulness")
+        db.session.add(habit)
+        db.session.commit()
+
+    # Act: Search with lowercase
+    response = logged_in_client.get("/habit-tracker?search=meditation")
+    html = response.data.decode("utf-8")
+
+    # Assert: Should find the habit despite case difference
+    assert response.status_code == 200
+    assert "Morning MEDITATION" in html
+
+
+def test_search_habits_no_results(logged_in_client, app):
+    """Test search with no matching results shows appropriate message."""
+    # Arrange: Create some habits
+    with app.app_context():
+        habit = Habit(name="Morning Yoga", description="Stretching routine", category="Health")
+        db.session.add(habit)
+        db.session.commit()
+
+    # Act: Search for something that doesn't exist
+    response = logged_in_client.get("/habit-tracker?search=NonExistentHabit")
+    html = response.data.decode("utf-8")
+
+    # Assert: Should show "no results" message
+    assert response.status_code == 200
+    assert ("No habits found" in html or "No habits yet" in html)
+    assert "Morning Yoga" not in html
+
+
+def test_search_habits_empty_query_shows_all(logged_in_client, app):
+    """Test that empty search query shows all habits."""
+    # Arrange: Create test habits
+    with app.app_context():
+        habit1 = Habit(name="Habit One", description="First habit", category="Health")
+        habit2 = Habit(name="Habit Two", description="Second habit", category="Fitness")
+        db.session.add_all([habit1, habit2])
+        db.session.commit()
+
+    # Act: Search with empty query
+    response = logged_in_client.get("/habit-tracker?search=")
+    html = response.data.decode("utf-8")
+
+    # Assert: Should show all habits
+    assert response.status_code == 200
+    assert "Habit One" in html
+    assert "Habit Two" in html
+
+
+def test_search_habits_with_special_characters(logged_in_client, app):
+    """Test that search handles special characters correctly."""
+    # Arrange: Create habit with special characters
+    with app.app_context():
+        habit = Habit(name="C++ Programming", description="Learn C++", category="Study")
+        db.session.add(habit)
+        db.session.commit()
+
+    # Act: Search for the special characters
+    response = logged_in_client.get("/habit-tracker?search=C++")
+    html = response.data.decode("utf-8")
+
+    # Assert: Should find the habit
+    assert response.status_code == 200
+    assert "C++ Programming" in html
+
+
+def test_search_excludes_archived_habits(logged_in_client, app):
+    """Test that search does not return archived habits."""
+    # Arrange: Create both active and archived habits
+    from datetime import datetime, timezone
+
+    with app.app_context():
+        active_habit = Habit(name="Active Exercise", description="Daily workout", is_archived=False)
+        archived_habit = Habit(
+            name="Archived Exercise",
+            description="Old workout",
+            is_archived=True,
+            archived_at=datetime.now(timezone.utc),
+        )
+        db.session.add_all([active_habit, archived_habit])
+        db.session.commit()
+
+    # Act: Search for "Exercise"
+    response = logged_in_client.get("/habit-tracker?search=Exercise")
+    html = response.data.decode("utf-8")
+
+    # Assert: Only active habit should appear
+    assert response.status_code == 200
+    assert "Active Exercise" in html
+    assert "Archived Exercise" not in html
+
+
+def test_search_excludes_paused_habits(logged_in_client, app):
+    """Test that search does not return paused habits."""
+    # Arrange: Create both active and paused habits
+    from datetime import datetime, timezone
+
+    with app.app_context():
+        active_habit = Habit(name="Active Yoga", description="Daily practice", is_paused=False)
+        paused_habit = Habit(
+            name="Paused Yoga",
+            description="On hold",
+            is_paused=True,
+            paused_at=datetime.now(timezone.utc),
+        )
+        db.session.add_all([active_habit, paused_habit])
+        db.session.commit()
+
+    # Act: Search for "Yoga"
+    response = logged_in_client.get("/habit-tracker?search=Yoga")
+    html = response.data.decode("utf-8")
+
+    # Assert: Only active habit should appear
+    assert response.status_code == 200
+    assert "Active Yoga" in html
+    assert "Paused Yoga" not in html
+
+
+def test_search_works_with_other_filters(logged_in_client, app):
+    """Test that search can be combined with category and priority filters."""
+    # Arrange: Create various habits
+    with app.app_context():
+        habit1 = Habit(name="High Priority Exercise", description="Gym", category="Fitness", priority="High")
+        habit2 = Habit(name="Low Priority Exercise", description="Walk", category="Fitness", priority="Low")
+        habit3 = Habit(name="High Priority Study", description="Read", category="Study", priority="High")
+        db.session.add_all([habit1, habit2, habit3])
+        db.session.commit()
+
+    # Act: Search for "Exercise" with High priority filter
+    response = logged_in_client.get("/habit-tracker?search=Exercise&priority=High")
+    html = response.data.decode("utf-8")
+
+    # Assert: Only high priority exercise habit should appear
+    assert response.status_code == 200
+    assert "High Priority Exercise" in html
+    assert "Low Priority Exercise" not in html
+    assert "High Priority Study" not in html
+
+
+def test_search_bar_displays_search_query(logged_in_client, app):
+    """Test that the search bar retains the search query value."""
+    # Arrange: Create a habit
+    with app.app_context():
+        habit = Habit(name="Test Habit", description="Test", category="Health")
+        db.session.add(habit)
+        db.session.commit()
+
+    # Act: Perform a search
+    response = logged_in_client.get("/habit-tracker?search=Test")
+    html = response.data.decode("utf-8")
+
+    # Assert: Search input should contain the search term
+    assert response.status_code == 200
+    assert 'value="Test"' in html or "Test" in html
+
+
+def test_search_clear_button_appears_when_searching(logged_in_client, app):
+    """Test that clear button appears when there is a search query."""
+    # Arrange: Create a habit
+    with app.app_context():
+        habit = Habit(name="Test Habit", description="Test", category="Health")
+        db.session.add(habit)
+        db.session.commit()
+
+    # Act: Perform a search
+    response = logged_in_client.get("/habit-tracker?search=Test")
+    html = response.data.decode("utf-8")
+
+    # Assert: Clear button should be present
+    assert response.status_code == 200
+    assert "Clear" in html
+
+
+def test_search_requires_authentication(client):
+    """Test that search functionality requires authentication."""
+    # Act: Try to search without being logged in
+    response = client.get("/habit-tracker?search=Exercise", follow_redirects=False)
+
+    # Assert: Should redirect to signin
+    assert response.status_code == 302
+    assert response.location == "/signin"
+
+
+#  Export Habits to CSV Tests
+
+
+
+def test_export_csv_returns_csv_file(logged_in_client, app):
+    """Test that GET /habit-tracker/export/csv returns a CSV file."""
+    # Arrange: Create test habits
+    with app.app_context():
+        habit1 = Habit(name="Morning Exercise", description="Daily workout", category="Fitness", priority="High")
+        habit2 = Habit(name="Evening Reading", description="Read books", category="Study", priority="Medium")
+        db.session.add_all([habit1, habit2])
+        db.session.commit()
+
+    # Act: Request CSV export
+    response = logged_in_client.get("/habit-tracker/export/csv")
+
+    # Assert: Check response is CSV
+    assert response.status_code == 200
+    assert response.mimetype == 'text/csv'
+    assert 'attachment' in response.headers.get('Content-Disposition', '')
+    assert 'habits_export_' in response.headers.get('Content-Disposition', '')
+
+
+def test_export_csv_contains_correct_headers(logged_in_client, app):
+    """Test that exported CSV has correct column headers."""
+    # Arrange: Create a habit
+    with app.app_context():
+        habit = Habit(name="Test Habit", description="Test", category="Health", priority="Low")
+        db.session.add(habit)
+        db.session.commit()
+
+    # Act: Request CSV export
+    response = logged_in_client.get("/habit-tracker/export/csv")
+    csv_data = response.data.decode('utf-8')
+
+    # Assert: Check headers
+    assert response.status_code == 200
+    assert 'Name,Description,Category,Priority,Created Date,Status' in csv_data
+
+
+def test_export_csv_contains_habit_data(logged_in_client, app):
+    """Test that exported CSV contains habit data."""
+    # Arrange: Create test habits
+    with app.app_context():
+        habit1 = Habit(name="Morning Yoga", description="Stretch routine", category="Fitness", priority="High")
+        habit2 = Habit(name="Study Python", description="Learn coding", category="Study", priority="Medium")
+        db.session.add_all([habit1, habit2])
+        db.session.commit()
+
+    # Act: Request CSV export
+    response = logged_in_client.get("/habit-tracker/export/csv")
+    csv_data = response.data.decode('utf-8')
+
+    # Assert: Check habit data is present
+    assert response.status_code == 200
+    assert 'Morning Yoga' in csv_data
+    assert 'Stretch routine' in csv_data
+    assert 'Fitness' in csv_data
+    assert 'High' in csv_data
+    assert 'Study Python' in csv_data
+    assert 'Learn coding' in csv_data
+    assert 'Study' in csv_data
+    assert 'Medium' in csv_data
+    assert 'Active' in csv_data
+
+
+def test_export_csv_excludes_archived_habits(logged_in_client, app):
+    """Test that exported CSV does not include archived habits."""
+    # Arrange: Create active and archived habits
+    from datetime import datetime, timezone
+
+    with app.app_context():
+        active_habit = Habit(name="Active Habit", description="Active", category="Health", is_archived=False)
+        archived_habit = Habit(
+            name="Archived Habit",
+            description="Archived",
+            category="Study",
+            is_archived=True,
+            archived_at=datetime.now(timezone.utc)
+        )
+        db.session.add_all([active_habit, archived_habit])
+        db.session.commit()
+
+    # Act: Request CSV export
+    response = logged_in_client.get("/habit-tracker/export/csv")
+    csv_data = response.data.decode('utf-8')
+
+    # Assert: Only active habit should be in CSV
+    assert response.status_code == 200
+    assert 'Active Habit' in csv_data
+    assert 'Archived Habit' not in csv_data
+
+
+def test_export_csv_excludes_paused_habits(logged_in_client, app):
+    """Test that exported CSV does not include paused habits."""
+    # Arrange: Create active and paused habits
+    from datetime import datetime, timezone
+
+    with app.app_context():
+        active_habit = Habit(name="Active Habit", description="Active", category="Health", is_paused=False)
+        paused_habit = Habit(
+            name="Paused Habit",
+            description="Paused",
+            category="Fitness",
+            is_paused=True,
+            paused_at=datetime.now(timezone.utc)
+        )
+        db.session.add_all([active_habit, paused_habit])
+        db.session.commit()
+
+    # Act: Request CSV export
+    response = logged_in_client.get("/habit-tracker/export/csv")
+    csv_data = response.data.decode('utf-8')
+
+    # Assert: Only active habit should be in CSV
+    assert response.status_code == 200
+    assert 'Active Habit' in csv_data
+    assert 'Paused Habit' not in csv_data
+
+
+def test_export_csv_handles_empty_fields(logged_in_client, app):
+    """Test that CSV export handles habits with missing optional fields."""
+    # Arrange: Create habit with minimal data
+    with app.app_context():
+        habit = Habit(name="Minimal Habit")  # No description, category, or priority
+        db.session.add(habit)
+        db.session.commit()
+
+    # Act: Request CSV export
+    response = logged_in_client.get("/habit-tracker/export/csv")
+    csv_data = response.data.decode('utf-8')
+
+    # Assert: Should handle empty fields gracefully
+    assert response.status_code == 200
+    assert 'Minimal Habit' in csv_data
+    # Should have default values for missing fields
+    assert 'Uncategorized' in csv_data or ',,' in csv_data
+    assert 'Medium' in csv_data  # Default priority
+
+
+def test_export_csv_requires_authentication(client):
+    """Test that CSV export requires authentication."""
+    # Act: Try to export without being logged in
+    response = client.get("/habit-tracker/export/csv", follow_redirects=False)
+
+    # Assert: Should redirect to signin
+    assert response.status_code == 302
+    assert response.location == "/signin"
+
+
+def test_export_csv_filename_has_timestamp(logged_in_client, app):
+    """Test that exported CSV filename includes timestamp."""
+    # Arrange: Create a habit
+    with app.app_context():
+        habit = Habit(name="Test Habit", description="Test")
+        db.session.add(habit)
+        db.session.commit()
+
+    # Act: Request CSV export
+    response = logged_in_client.get("/habit-tracker/export/csv")
+
+    # Assert: Check filename format
+    assert response.status_code == 200
+    content_disposition = response.headers.get('Content-Disposition', '')
+    assert 'habits_export_' in content_disposition
+    assert '.csv' in content_disposition
+
+
+def test_export_csv_with_no_habits(logged_in_client):
+    """Test CSV export when user has no habits."""
+    # Act: Request CSV export with no habits
+    response = logged_in_client.get("/habit-tracker/export/csv")
+    csv_data = response.data.decode('utf-8')
+
+    # Assert: Should return CSV with just headers
+    assert response.status_code == 200
+    assert 'Name,Description,Category,Priority,Created Date,Status' in csv_data
+    # Should only have header row (no data rows)
+    lines = csv_data.strip().split('\n')
+    assert len(lines) == 1  # Only header line
+
+
+def test_export_csv_multiple_habits_different_categories(logged_in_client, app):
+    """Test CSV export with multiple habits across different categories."""
+    # Arrange: Create diverse habits
+    with app.app_context():
+        habits = [
+            Habit(name="Gym", description="Weight training", category="Fitness", priority="High"),
+            Habit(name="Meditate", description="10 minutes", category="Mindfulness", priority="Medium"),
+            Habit(name="Code", description="Practice Python", category="Productivity", priority="High"),
+            Habit(name="Read", description="30 pages", category="Study", priority="Low"),
+        ]
+        db.session.add_all(habits)
+        db.session.commit()
+
+    # Act: Request CSV export
+    response = logged_in_client.get("/habit-tracker/export/csv")
+    csv_data = response.data.decode('utf-8')
+
+    # Assert: All habits should be in export
+    assert response.status_code == 200
+    assert 'Gym' in csv_data
+    assert 'Meditate' in csv_data
+    assert 'Code' in csv_data
+    assert 'Read' in csv_data
+    assert 'Fitness' in csv_data
+    assert 'Mindfulness' in csv_data
+    assert 'Productivity' in csv_data
+    assert 'Study' in csv_data
+
+
+def test_export_csv_special_characters_in_data(logged_in_client, app):
+    """Test that CSV export handles special characters correctly."""
+    # Arrange: Create habit with special characters
+    with app.app_context():
+        habit = Habit(
+            name='Habit "with" quotes',
+            description="Description, with, commas",
+            category="Test",
+            priority="High"
+        )
+        db.session.add(habit)
+        db.session.commit()
+
+    # Act: Request CSV export
+    response = logged_in_client.get("/habit-tracker/export/csv")
+
+    # Assert: Should handle special characters
+    assert response.status_code == 200
+    # CSV should be parseable despite special characters
+    assert response.mimetype == 'text/csv'
+

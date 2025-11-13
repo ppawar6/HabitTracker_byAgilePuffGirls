@@ -1,12 +1,9 @@
 {% extends "base.html" %}
 
-
 {% block title %}Habit Tracker • Student Starter Pack{% endblock %}
-
 
 {% block extra_head %}
 <style>
-
 
     [data-theme="dark"] select,
     [data-theme="dark"] input,
@@ -15,28 +12,25 @@
         color: var(--text-primary);
         border-color: var(--border-color);
     }
-   
+    
     [data-theme="dark"] select option {
         background-color: var(--bg-primary);
         color: var(--text-primary);
     }
 
-
     [data-theme="dark"] .bg-white {
         background-color: var(--bg-primary);
     }
-   
+    
     [data-theme="dark"] .border-gray-100 {
         border-color: var(--border-color);
     }
-
 
     [data-theme="dark"] .text-gray-900,
     [data-theme="dark"] .modal-content .text-gray-900,
     [data-theme="dark"] .text-gray-700 {
         color: var(--text-primary);
     }
-
 
     [data-theme="dark"] .text-gray-600,
     [data-theme="dark"] .text-gray-500,
@@ -45,77 +39,79 @@
         color: var(--text-secondary);
     }
 
-
     [data-theme="dark"] .text-xs.text-gray-500.bg-white {
         background-color: var(--bg-secondary);
         color: var(--text-secondary);
     }
-
 
     [data-theme="dark"] #shareText {
         color: var(--text-primary);
         background: var(--bg-secondary);
     }
 
-
     [data-theme="dark"] .border-gray-100 {
         border-color: var(--border-color);
     }
-
 
     [data-theme="dark"] .hover\:border-purple-200:hover {
         border-color: rgba(167, 139, 250, 0.3);
     }
 
-
     [data-theme="dark"] .hover\:bg-gradient-to-r:hover {
         background: var(--bg-secondary);
     }
-
 
     [data-theme="dark"] .bg-gradient-to-r.from-purple-50.to-indigo-50 {
         background: var(--bg-secondary);
         border-color: var(--border-color);
     }
 
-
     [data-theme="dark"] .text-xs.text-gray-500.bg-gray-100 {
         background-color: var(--bg-secondary);
         color: var(--text-secondary);
     }
-
 
     /* Dark mode styles for paused habits */
     [data-theme="dark"] .text-gray-700 {
         color: var(--text-primary);
     }
 
-
     [data-theme="dark"] .bg-yellow-50 {
         background-color: rgba(250, 204, 21, 0.1);
     }
-
 
     [data-theme="dark"] .bg-yellow-200 {
         background-color: rgba(250, 204, 21, 0.3);
         color: var(--text-primary);
     }
 
-
     [data-theme="dark"] .text-yellow-800 {
         color: var(--text-primary);
     }
-
 
     [data-theme="dark"] .border-yellow-100 {
         border-color: rgba(250, 204, 21, 0.2);
     }
 
-
     [data-theme="dark"] .border-yellow-300 {
         border-color: rgba(250, 204, 21, 0.3);
     }
-   
+
+    /* Dark mode for filter panel background + border */
+    [data-theme="dark"] .bg-gray-50 {
+        background-color: var(--bg-secondary);
+    }
+
+    [data-theme="dark"] .border-gray-200 {
+        border-color: var(--border-color);
+    }
+
+    /* Optional: make checkboxes use the accent color in dark mode */
+    [data-theme="dark"] input[type="checkbox"] {
+        accent-color: #a855f7; /* Tailwind purple-500 vibe */
+    }
+
+    
     .modal {
         display: none;
         position: fixed;
@@ -128,7 +124,6 @@
         backdrop-filter: blur(4px);
     }
 
-
     .modal.show {
         display: flex;
         align-items: center;
@@ -136,12 +131,10 @@
         animation: fadeIn 0.3s ease-out;
     }
 
-
     @keyframes fadeIn {
         from { opacity: 0; }
         to { opacity: 1; }
     }
-
 
     .modal-content {
         background: var(--bg-primary, white);
@@ -154,12 +147,10 @@
         border: 1px solid var(--border-color, #e5e7eb);
     }
 
-
     [data-theme="dark"] .bg-gradient-to-r.from-purple-50.to-indigo-50.rounded-lg {
         background: var(--bg-secondary);
         border-color: var(--border-color);
     }
-
 
     @keyframes slideUp {
         from { transform: translateY(20px); opacity: 0; }
@@ -167,7 +158,6 @@
     }
 </style>
 {% endblock %}
-
 
 {% block content %}
 <div class="mb-8">
@@ -184,8 +174,6 @@
             </div>
         </div>
 
-
-       
         {% if habits %}
         <button onclick="openShareModal()"
             class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-md hover:shadow-lg">
@@ -198,7 +186,6 @@
     </div>
 </div>
 
-
 <div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-6 mb-8 border border-purple-100">
     <div class="flex items-start gap-3">
         <span class="text-2xl">🧘</span>
@@ -208,7 +195,6 @@
         </div>
     </div>
 </div>
-
 
 <div class="grid lg:grid-cols-2 gap-8">
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -230,12 +216,10 @@
                     placeholder="Why is this habit important to you?"></textarea>
             </div>
 
-
             <div>
             <label for="habit-category" class="block text-sm font-medium text-gray-700 mb-2">
             Category
             </label>
-
 
             <select id="habit-category" name="category"
             class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200">
@@ -252,7 +236,6 @@
             </select>
             </div>
 
-
             <div id="custom-category-wrap" class="hidden">
             <label for="habit-category-custom" class="block text-sm font-medium text-gray-700 mb-2">
             Custom Category
@@ -262,6 +245,17 @@
             placeholder="e.g., Sleep, Diet, Coding, Language..." />
             </div>
 
+            <div>
+            <label for="habit-priority" class="block text-sm font-medium text-gray-700 mb-2">
+            Priority Level
+            </label>
+            <select id="habit-priority" name="priority"
+            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200">
+            <option value="Medium" selected>Medium</option>
+            <option value="High">High</option>
+            <option value="Low">Low</option>
+            </select>
+            </div>
 
             <button type="submit"
                 class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-lg font-medium hover:from-purple-700 hover:to-indigo-700 transform hover:scale-[1.02] transition-all duration-200 shadow-lg">
@@ -275,41 +269,155 @@
         </form>
     </div>
 
-
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div class="flex items-center justify-between mb-6">
+        <!-- Header row -->
+        <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-2">
                 <span class="text-xl">📊</span>
                 <h3 class="text-lg font-semibold text-gray-900">Your Progress</h3>
             </div>
             <div class="flex items-center gap-3">
                 {% if habits %}
-                <span class="text-sm text-gray-500">{{ habits|length }} habit{{ 's' if habits|length != 1 else '' }}</span>
+                    <span class="text-sm text-gray-500">
+                        {{ habits|length }} habit{{ 's' if habits|length != 1 else '' }}
+                    </span>
 
-
-               
-                <div class="relative">
-                    <select id="sortSelect" onchange="window.location.href='?sort=' + this.value"
-                        class="text-sm px-3 py-1.5 border border-gray-200 rounded-lg bg-white hover:border-purple-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 cursor-pointer appearance-none pr-8">
-                        <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Sort: Newest First</option>
-                        <option value="oldest" {% if current_sort == 'oldest' %}selected{% endif %}>Sort: Oldest First</option>
-                        <option value="az" {% if current_sort == 'az' %}selected{% endif %}>Sort: A-Z</option>
-                        <option value="za" {% if current_sort == 'za' %}selected{% endif %}>Sort: Z-A</option>
-                    </select>
-                    <svg class="w-4 h-4 absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                </div>
-               
+                    <!-- Sort dropdown -->
+                    <div class="relative">
+                        <select id="sortSelect"
+                                onchange="window.location.href='?sort=' + this.value"
+                                class="text-sm px-3 py-1.5 border border-gray-200 rounded-lg bg-white hover:border-purple-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 cursor-pointer appearance-none pr-8">
+                            <option value="priority" {% if current_sort == 'priority' or not current_sort %}selected{% endif %}>Sort: Priority</option>
+                            <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Sort: Newest First</option>
+                            <option value="oldest" {% if current_sort == 'oldest' %}selected{% endif %}>Sort: Oldest First</option>
+                            <option value="az" {% if current_sort == 'az' %}selected{% endif %}>Sort: A-Z</option>
+                            <option value="za" {% if current_sort == 'za' %}selected{% endif %}>Sort: Z-A</option>
+                        </select>
+                        <svg class="w-4 h-4 absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400"
+                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
                 {% endif %}
 
+                <!-- Filter button  -->
+                <button type="button"
+                        onclick="toggleFilterPanel()"
+                        class="flex items-center gap-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-700 bg-white hover:border-purple-300 hover:text-purple-700 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M3 4a1 1 0 011-1h16a1 1 0 01.8 1.6L15 12.25V19a1 1 0 01-1.447.894l-3-1.5A1 1 0 0110 17.5v-5.25L3.2 5.6A1 1 0 013 4z" />
+                    </svg>
+                    <span>Filter</span>
+                </button>
 
-                <a href="/habit-tracker/archived" class="text-sm text-purple-600 hover:text-purple-700 underline font-medium">
+                <a href="/habit-tracker/archived"
+                   class="text-sm text-purple-600 hover:text-purple-700 underline font-medium">
                     View Archived
                 </a>
             </div>
         </div>
 
+        <!-- Search bar on its own row -->
+        {% if habits %}
+        <div class="mb-4">
+            <form method="GET" action="/habit-tracker" class="flex gap-2">
+                <input
+                    type="text"
+                    name="search"
+                    value="{{ search_query or '' }}"
+                    placeholder="🔍 Search habits by name, description, or category..."
+                    class="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                    autocomplete="off">
+                <button type="submit"
+                        class="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-md">
+                    Search
+                </button>
+                {% if search_query %}
+                    <a href="/habit-tracker"
+                       class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all duration-200 font-medium">
+                        Clear
+                    </a>
+                {% endif %}
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- Filter panel: Category + Priority checkboxes -->
+        <div id="filterPanel" class="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50 hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Category filters -->
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Category</h4>
+                    <div class="space-y-1 text-sm text-gray-700">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox"
+                                name="category_filter"
+                                value="all"
+                                {% if not current_categories %}checked{% endif %}>
+                            <span>All categories</span>
+                        </label>
+                        {% for cat in filter_categories %}
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox"
+                                name="category_filter"
+                                value="{{ cat }}"
+                                {% if cat in current_categories %}checked{% endif %}>
+                            <span>{{ cat }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Priority level filters -->
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Priority level</h4>
+                    <div class="space-y-1 text-sm text-gray-700">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox"
+                                name="priority_filter"
+                                value="all"
+                                {% if not current_priorities %}checked{% endif %}>
+                            <span>All priorities</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox"
+                                name="priority_filter"
+                                value="High"
+                                {% if 'High' in current_priorities %}checked{% endif %}>
+                            <span>High</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox"
+                                name="priority_filter"
+                                value="Medium"
+                                {% if 'Medium' in current_priorities %}checked{% endif %}>
+                            <span>Medium</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox"
+                                name="priority_filter"
+                                value="Low"
+                                {% if 'Low' in current_priorities %}checked{% endif %}>
+                            <span>Low</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex items-center justify-end gap-3 md:col-span-2">
+                    <button type="button"
+                            onclick="clearFilters"
+                            class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800">
+                        Clear
+                    </button>
+                    <button type="button"
+                            onclick="applyFilters()"
+                            class="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                        Apply filters
+                    </button>
+                </div>
+            </div>
+        </div>
 
         {% if habits %}
             <div class="space-y-3 max-h-96 overflow-y-auto">
@@ -319,11 +427,15 @@
                         <div class="flex items-center gap-2 flex-1">
                             <form method="POST" action="/habit-tracker/toggle/{{ habit.id }}" class="inline">
                                 <button type="submit" class="text-purple-600 hover:text-purple-800 transition-colors">
-                                    {% set completed = habit.completed_dates|default('[]')|from_json %}
-                                    {% if today_str in completed %}
-                                        <span class="text-2xl">✓</span>
+                                    {% set completed_dates = habit.completed_dates|default('[]')|from_json %}
+                                    {% if today_str in completed_dates %}
+                                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
                                     {% else %}
-                                        <span class="text-2xl opacity-30">○</span>
+                                        <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="12" r="9" stroke-width="2"></circle>
+                                        </svg>
                                     {% endif %}
                                 </button>
                             </form>
@@ -339,8 +451,6 @@
                                 {{ habit.created_at.strftime('%b %d') }}
                             </span>
 
-
-                           
                             <button type="button"
                                 class="text-purple-400 hover:text-purple-600 transition-colors duration-200 opacity-0 group-hover:opacity-100 habit-edit-btn-{{ habit.id }}"
                                 onclick="toggleEditMode({{ habit.id }})"
@@ -366,8 +476,6 @@
                                 </svg>
                             </button>
 
-
-                           
                             <form method="POST" action="/habit-tracker/pause/{{ habit.id }}" class="inline">
                                 <button type="submit"
                                     class="text-yellow-400 hover:text-yellow-600 transition-colors duration-200 opacity-0 group-hover:opacity-100"
@@ -378,8 +486,6 @@
                                 </button>
                             </form>
 
-
-                         
                             <form method="POST" action="/habit-tracker/archive/{{ habit.id }}" class="inline">
                                 <button type="submit"
                                     class="text-blue-400 hover:text-blue-600 transition-colors duration-200 opacity-0 group-hover:opacity-100"
@@ -390,8 +496,6 @@
                                 </button>
                             </form>
 
-
-                           
                             <form method="POST" action="/habit-tracker/delete/{{ habit.id }}" class="inline">
                                 <button type="submit"
                                     class="text-red-400 hover:text-red-600 transition-colors duration-200 opacity-0 group-hover:opacity-100"
@@ -416,6 +520,19 @@
                             </span>
                         {% endif %}
 
+                        {% if habit.priority == 'High' %}
+                            <span class="inline-flex items-center gap-1 text-xs font-medium text-red-700 bg-red-100 px-3 py-1 rounded-full">
+                            <span class="w-2 h-2 rounded-full bg-red-600"></span> High Priority
+                            </span>
+                        {% elif habit.priority == 'Low' %}
+                            <span class="inline-flex items-center gap-1 text-xs font-medium text-yellow-700 bg-yellow-100 px-3 py-1 rounded-full">
+                            <span class="w-2 h-2 rounded-full bg-yellow-600"></span> Low Priority
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-100 px-3 py-1 rounded-full">
+                            <span class="w-2 h-2 rounded-full bg-blue-600"></span> Medium Priority
+                            </span>
+                        {% endif %}
 
                         <span class="inline-flex items-center gap-1 text-xs font-medium bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full">
                             🔥 0 day streak
@@ -430,17 +547,26 @@
         {% else %}
             <div class="text-center py-12">
                 <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full mb-4">
-                    <span class="text-2xl">🌱</span>
+                    {% if search_query %}
+                        <span class="text-2xl">🔍</span>
+                    {% else %}
+                        <span class="text-2xl">🌱</span>
+                    {% endif %}
                 </div>
-                <p class="text-gray-500 mb-2">No habits yet</p>
-                <p class="text-sm text-gray-400">Plant your first habit seed and watch it grow into a consistent routine.</p>
+                {% if search_query %}
+                    <p class="text-gray-500 mb-2">No habits found</p>
+                    <p class="text-sm text-gray-400">No habits match "{{ search_query }}"</p>
+                    <a href="/habit-tracker" class="inline-block mt-4 text-purple-600 hover:text-purple-700 underline">
+                        Clear search and view all habits
+                    </a>
+                {% else %}
+                    <p class="text-gray-500 mb-2">No habits yet</p>
+                    <p class="text-sm text-gray-400">Plant your first habit seed and watch it grow into a consistent routine.</p>
+                {% endif %}
             </div>
         {% endif %}
     </div>
 </div>
-
-
-
 
 {% if paused_habits %}
 <div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -451,7 +577,6 @@
             <span class="text-sm text-gray-500">({{ paused_habits|length }})</span>
         </div>
     </div>
-
 
     <div class="space-y-3">
         {% for habit in paused_habits %}
@@ -466,7 +591,6 @@
                         Paused {{ habit.paused_at.strftime('%b %d') }}
                     </span>
 
-
                     <form method="POST" action="/habit-tracker/resume/{{ habit.id }}" class="inline">
                         <button type="submit"
                             class="text-green-400 hover:text-green-600 transition-colors duration-200 opacity-0 group-hover:opacity-100"
@@ -477,7 +601,6 @@
                             </svg>
                         </button>
                     </form>
-
 
                     <form method="POST" action="/habit-tracker/delete/{{ habit.id }}" class="inline">
                         <button type="submit"
@@ -507,16 +630,12 @@
 </div>
 {% endif %}
 
-
 <div class="mt-8 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-8 text-white">
     <div class="max-w-3xl mx-auto text-center">
         <h3 class="text-2xl font-bold mb-2">Did You Know?</h3>
         <p class="opacity-90">It takes an average of 66 days to form a new habit. Start small, stay consistent, and celebrate your progress!</p>
     </div>
 </div>
-
-
-
 
 <div id="shareModal" class="modal">
     <div class="modal-content">
@@ -529,30 +648,36 @@
             </button>
         </div>
 
-
         <div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4 mb-4 border border-purple-200">
             <pre id="shareText" class="text-sm text-gray-800 whitespace-pre-wrap font-mono">Loading...</pre>
         </div>
 
-
-        <div class="flex gap-3">
-            <button onclick="copyToClipboard()"
-                class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 font-medium">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                </svg>
-                <span id="copyButtonText">Copy to Clipboard</span>
-            </button>
+        <div class="flex flex-col gap-3">
+            <!-- Row 1: Copy and Download buttons -->
+            <div class="flex gap-3">
+                <button onclick="copyToClipboard()"
+                    class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 font-medium">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                    <span id="copyButtonText">Copy to Clipboard</span>
+                </button>
+                <a href="/habit-tracker/export/csv"
+                   class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200 font-medium">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span>Download CSV</span>
+                </a>
+            </div>
+            <!-- Row 2: Close button -->
             <button onclick="closeShareModal()"
-                class="px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all duration-200 font-medium">
+                class="w-full px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all duration-200 font-medium">
                 Close
             </button>
         </div>
     </div>
 </div>
-
-
-
 
 <script>
   (function () {
@@ -560,9 +685,7 @@
     const customWrap = document.getElementById('custom-category-wrap');
     const customInput = document.getElementById('habit-category-custom');
 
-
     if (!selectEl) return;
-
 
     function toggleCustom() {
       const isOther = selectEl.value === 'other';
@@ -576,13 +699,10 @@
       }
     }
 
-
     selectEl.addEventListener('change', toggleCustom);
     toggleCustom();
   })();
 
-
- 
   function toggleEditMode(habitId) {
     const nameDisplay = document.querySelector('.habit-name-display-' + habitId);
     const editForm = document.querySelector('.habit-edit-form-' + habitId);
@@ -590,19 +710,16 @@
     const saveBtn = document.querySelector('.habit-save-btn-' + habitId);
     const cancelBtn = document.querySelector('.habit-cancel-btn-' + habitId);
 
-
     nameDisplay.classList.add('hidden');
     editForm.classList.remove('hidden');
     editBtn.classList.add('hidden');
     saveBtn.classList.remove('hidden');
     cancelBtn.classList.remove('hidden');
 
-
     const input = editForm.querySelector('input[name="name"]');
     input.focus();
     input.select();
   }
-
 
   function cancelEdit(habitId) {
     const nameDisplay = document.querySelector('.habit-name-display-' + habitId);
@@ -611,7 +728,6 @@
     const saveBtn = document.querySelector('.habit-save-btn-' + habitId);
     const cancelBtn = document.querySelector('.habit-cancel-btn-' + habitId);
 
-
     nameDisplay.classList.remove('hidden');
     editForm.classList.add('hidden');
     editBtn.classList.remove('hidden');
@@ -619,15 +735,11 @@
     cancelBtn.classList.add('hidden');
   }
 
-
   function saveEdit(habitId) {
     const editForm = document.querySelector('.habit-edit-form-' + habitId);
     editForm.submit();
   }
 </script>
-
-
-
 
 <script>
 function openShareModal() {
@@ -636,43 +748,34 @@ function openShareModal() {
     generateShareText();
 }
 
-
 function closeShareModal() {
     const modal = document.getElementById('shareModal');
     modal.classList.remove('show');
 }
 
-
 function generateShareText() {
     const habitCount = {{ habits|length if habits else 0 }};
 
-
     const shareText = `🎯 My Habit Tracker Progress 🎯
-
 
 📊 Active Habits: ${habitCount}
 🔥 Longest Streak: 0 days
 ✅ Habits Tracked: ${habitCount} total
 💪 Keep going strong!
 
-
 Building better habits, one day at a time!
 #HabitTracker #SelfImprovement #Goals`;
-
 
     document.getElementById('shareText').textContent = shareText;
 }
 
-
 function copyToClipboard() {
     const shareText = document.getElementById('shareText').textContent;
-
 
     navigator.clipboard.writeText(shareText).then(() => {
         const button = document.getElementById('copyButtonText');
         const originalText = button.textContent;
         button.textContent = '✓ Copied!';
-
 
         setTimeout(() => {
             button.textContent = originalText;
@@ -683,11 +786,59 @@ function copyToClipboard() {
     });
 }
 
-
 document.getElementById('shareModal').addEventListener('click', function(e) {
     if (e.target === this) {
         closeShareModal();
     }
 });
 </script>
+
+<script>
+  function toggleFilterPanel() {
+    const panel = document.getElementById('filterPanel');
+    if (!panel) return;
+    panel.classList.toggle('hidden');
+  }
+
+  function applyFilters() {
+    const categoryBoxes = document.querySelectorAll('input[name="category_filter"]:checked');
+    const priorityBoxes = document.querySelectorAll('input[name="priority_filter"]:checked');
+
+    // collect all selected categories except "all"
+    let categories = Array.from(categoryBoxes)
+      .map(b => b.value)
+      .filter(v => v && v !== 'all');
+
+    // collect all selected priorities except "all"
+    let priorities = Array.from(priorityBoxes)
+      .map(b => b.value)
+      .filter(v => v && v !== 'all');
+
+    const url = new URL(window.location.href);
+
+    if (categories.length === 0) {
+      // no specific category => treat as "all"
+      url.searchParams.delete('category');
+    } else {
+      url.searchParams.set('category', categories.join(','));
+    }
+
+    if (priorities.length === 0) {
+      // no specific priority => treat as "all"
+      url.searchParams.delete('priority');
+    } else {
+      url.searchParams.set('priority', priorities.join(','));
+    }
+
+    window.location.href = url.toString();
+  }
+
+  function clearFilters() {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('category');
+    url.searchParams.delete('priority');
+    window.location.href = url.pathname; // reset to defaults
+  }
+</script>
+
 {% endblock %}

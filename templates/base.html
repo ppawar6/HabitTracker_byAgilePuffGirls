@@ -159,7 +159,7 @@
                 <div class="flex items-center gap-4">
                     <!-- Statistics Link (only show when authenticated) -->
                     {% if session.get('authenticated') %}
-                    <a href="{{ url_for('habit_tracker') }}"
+                    <a href="{{ url_for('habit_stats') }}"
                        class="p-2 rounded-lg bg-theme-secondary hover:opacity-80 transition-colors"
                        title="Statistics">
                         <svg class="w-6 h-6 text-theme-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -368,7 +368,7 @@
                 </div>
 
                 <div class="border-t border-theme pt-6"></div>
-                
+
                 <div class="flex items-center justify-between">
                     <div>
                         <h4 class="font-medium text-theme-primary">Push Notifications</h4>
