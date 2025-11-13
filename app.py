@@ -37,20 +37,22 @@ def from_json_filter(value):
         return json.loads(value)
     except json.JSONDecodeError:
         return []
-
+    
 @app.template_filter("cat_styles")
 def cat_styles(category):
     """
-    Returns inline CSS variables for the habit card + pill.
-    Usage: style="{{ habit.category|cat_styles }}"
+    Returns inline styles for the habit card + CSS variables for the category pill.
+    Usage on the card:
+        style="{{ habit.category|cat_styles }}"
     """
     c = _color_for_category(category)
     return (
-        f"--cat-card:{c['card']};"
-        f"--cat-border:{c['border']};"
-        f"--cat-pill-bg:{c['pill_bg']};"
-        f"--cat-pill-text:{c['pill_text']};"
+        f"background-color: {c['card']};"
+        f"border-color: {c['border']};"
+        f"--cat-pill-bg: {c['pill_bg']};"
+        f"--cat-pill-text: {c['pill_text']};"
     )
+
 
 
 
