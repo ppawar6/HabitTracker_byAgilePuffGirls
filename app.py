@@ -447,4 +447,4 @@ if __name__ == "__main__":
     db_path = os.path.join(app.instance_path, "app.db")
     if not os.path.exists(db_path):
         init_db()
-    app.run(debug=True)
+    app.run(debug=True, port=8080)
