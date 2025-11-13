@@ -1,9 +1,11 @@
+import csv
+import io
 import json
 import os
 import random
 from datetime import datetime, timezone
 
-from flask import Flask, jsonify, redirect, render_template, request, session, url_for
+from flask import Flask, Response, jsonify, redirect, render_template, request, session, url_for
 
 from extensions import db
 from models import Habit, UserPreferences
@@ -236,6 +238,46 @@ def habit_tracker():
         current_categories=category_filters,   # list of selected categories
         current_priorities=priority_filters,   # list of selected priority levels
         search_query=search_query,  # NEW: Pass search query to template
+    )
+
+
+# NEW: Export Habits to CSV
+@app.route("/habit-tracker/export/csv")
+def export_habits_csv():
+    """Export active habits to CSV file"""
+    if not session.get("authenticated"):
+        return redirect(url_for("signin"))
+    
+    # Get all active habits (not archived, not paused)
+    habits = Habit.query.filter_by(is_archived=False, is_paused=False).order_by(Habit.created_at.desc()).all()
+    
+    # Create CSV in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow(['Name', 'Description', 'Category', 'Priority', 'Created Date', 'Status'])
+    
+    # Write habit data
+    for habit in habits:
+        writer.writerow([
+            habit.name,
+            habit.description or '',
+            habit.category or 'Uncategorized',
+            habit.priority or 'Medium',
+            habit.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'Active'
+        ])
+    
+    # Prepare response
+    output.seek(0)
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f'habits_export_{timestamp}.csv'
+    
+    return Response(
+        output.getvalue(),
+        mimetype='text/csv',
+        headers={'Content-Disposition': f'attachment; filename={filename}'}
     )
 
 
