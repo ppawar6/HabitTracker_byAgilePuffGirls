@@ -89,6 +89,19 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
                         </svg>
                         <span class="font-medium text-gray-700">{{ habit.name }}</span>
+                                    {% if habit.category %}
+                            <span
+                                class="ml-2 inline-block text-xs px-2 py-1 rounded-full"
+                                style="{{ habit.category|cat_styles }} background: var(--cat-pill-bg); color: var(--cat-pill-text);"
+                            >
+                                {{ habit.category }}
+                            </span>
+                            {% else %}
+                            <span class="ml-2 inline-block text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-700">
+                                Uncategorized
+                            </span>
+                            {% endif %}
+
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">

@@ -633,6 +633,70 @@ def test_filter_by_category_and_priority_combination(logged_in_client, app):
     assert "Fitness High" not in html
 
 
+def test_archived_habits_page_displays_category_pill(logged_in_client, app):
+    """Archived page shows the category (e.g., 'Fitness') for each archived habit."""
+    from datetime import datetime, timezone
+    with app.app_context():
+        habit = Habit(
+            name="Archived With Category",
+            description="old",
+            category="Fitness",
+            is_archived=True,
+            archived_at=datetime.now(timezone.utc),
+        )
+        db.session.add(habit)
+        db.session.commit()
+
+    resp = logged_in_client.get("/habit-tracker/archived")
+    html = resp.data.decode("utf-8")
+    assert resp.status_code == 200
+    assert "Archived With Category" in html
+    # Presence of the category text confirms the pill/label is rendered
+    assert "Fitness" in html
+
+
+def test_archiving_preserves_category_and_shows_on_archived_page(logged_in_client, app):
+    """When an active habit is archived, its category persists and is rendered on the archived page."""
+    with app.app_context():
+        habit = Habit(name="Move To Archive", description="test", category="Finance", is_archived=False)
+        db.session.add(habit)
+        db.session.commit()
+        habit_id = habit.id
+
+    # Archive it
+    resp = logged_in_client.post(f"/habit-tracker/archive/{habit_id}", follow_redirects=False)
+    assert resp.status_code == 302
+
+    # Verify on archived page
+    resp2 = logged_in_client.get("/habit-tracker/archived")
+    html = resp2.data.decode("utf-8")
+    assert resp2.status_code == 200
+    assert "Move To Archive" in html
+    assert "Finance" in html
+
+
+def test_archived_habits_page_handles_uncategorized(logged_in_client, app):
+    """Archived page shows a sensible label for habits without a category (e.g., 'Uncategorized')."""
+    from datetime import datetime, timezone
+    with app.app_context():
+        no_cat = Habit(
+            name="No Category Habit",
+            description="none",
+            category=None,
+            is_archived=True,
+            archived_at=datetime.now(timezone.utc),
+        )
+        db.session.add(no_cat)
+        db.session.commit()
+
+    resp = logged_in_client.get("/habit-tracker/archived")
+    html = resp.data.decode("utf-8")
+    assert resp.status_code == 200
+    assert "No Category Habit" in html
+    # Your template/filter should render a fallback label for missing categories
+    assert ("Uncategorized" in html) or ("Uncategorised" in html)
+
+
 # === Toggle Completion Tests ===
 
 

@@ -38,6 +38,21 @@ def from_json_filter(value):
     except json.JSONDecodeError:
         return []
 
+@app.template_filter("cat_styles")
+def cat_styles(category):
+    """
+    Returns inline CSS variables for the habit card + pill.
+    Usage: style="{{ habit.category|cat_styles }}"
+    """
+    c = _color_for_category(category)
+    return (
+        f"--cat-card:{c['card']};"
+        f"--cat-border:{c['border']};"
+        f"--cat-pill-bg:{c['pill_bg']};"
+        f"--cat-pill-text:{c['pill_text']};"
+    )
+
+
 
 from routes.habits import habits_bp  # noqa: E402
 from routes.notifications import create_notification, notifications_bp  # noqa: E402
@@ -60,6 +75,27 @@ CATEGORIES = [
     "Social",
     "Chores",
 ]
+
+CATEGORY_COLORS = {
+    "Health":        {"card": "#FFF1F2", "border": "#FECACA", "pill_bg": "#E11D48", "pill_text": "#FFFFFF"},   # rose-red
+    "Fitness":       {"card": "#F7FEE7", "border": "#D9F99D", "pill_bg": "#65A30D", "pill_text": "#FFFFFF"},   # lime-green
+    "Study":         {"card": "#EFF6FF", "border": "#BFDBFE", "pill_bg": "#2563EB", "pill_text": "#FFFFFF"},   # blue
+    "Productivity":  {"card": "#F5F3FF", "border": "#DDD6FE", "pill_bg": "#7C3AED", "pill_text": "#FFFFFF"},   # violet
+    "Mindfulness":   {"card": "#FAF5FF", "border": "#E9D5FF", "pill_bg": "#C026D3", "pill_text": "#FFFFFF"},   # purple
+    "Finance":       {"card": "#ECFEFF", "border": "#A5F3FC", "pill_bg": "#0891B2", "pill_text": "#FFFFFF"},   # teal-blue
+    "Social":        {"card": "#FFF7ED", "border": "#FED7AA", "pill_bg": "#EA580C", "pill_text": "#FFFFFF"},   # orange
+    "Chores":        {"card": "#F9FAFB", "border": "#E5E7EB", "pill_bg": "#4B5563", "pill_text": "#FFFFFF"},   # gray
+}
+
+
+# One unified color for any custom (non-preset) category
+CUSTOM_COLOR = {"card": "#FDF2F8", "border": "#FBCFE8", "pill_bg": "#EC4899", "pill_text": "#FFFFFF"}
+NEUTRAL_COLOR = {"card": "#FFFFFF", "border": "#E5E7EB", "pill_bg": "#E5E7EB", "pill_text": "#111827"}  # when no category
+
+def _color_for_category(category: str):
+    if not category:
+        return NEUTRAL_COLOR
+    return CATEGORY_COLORS.get(category, CUSTOM_COLOR)
 
 
 @app.route("/")
