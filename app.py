@@ -3,13 +3,10 @@ import os
 import random
 from datetime import datetime, timezone
 
-
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for
-
 
 from extensions import db
 from models import Habit, UserPreferences
-
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "dev-secret-key-change-in-production"
@@ -34,7 +31,6 @@ def from_json_filter(value):
 from routes.habits import habits_bp  # noqa: E402
 from routes.notifications import create_notification, notifications_bp  # noqa: E402
 from routes.theme import theme_bp  # noqa: E402
-
 
 app.register_blueprint(theme_bp)
 app.register_blueprint(habits_bp)
@@ -156,16 +152,16 @@ def habit_tracker():
 
 
     if sort_by == 'az':
-       
+
         habits = sorted(habits, key=lambda h: h.name.lower())
     elif sort_by == 'za':
-       
+
         habits = sorted(habits, key=lambda h: h.name.lower(), reverse=True)
     elif sort_by == 'oldest':
-       
+
         habits = sorted(habits, key=lambda h: h.created_at)
-    else:  
-   
+    else:
+
         habits = sorted(habits, key=lambda h: h.created_at, reverse=True)
 
 
@@ -400,6 +396,45 @@ def archived_habits():
     )
 
 
+@app.route("/habit-tracker/stats")
+def habit_stats():
+    """View habit statistics"""
+    if not session.get("authenticated"):
+        return redirect(url_for("signin"))
+
+    # Calculate statistics
+    all_habits = Habit.query.all()
+    total_habits = len(all_habits)
+    active_habits = len([h for h in all_habits if not h.is_archived and not h.is_paused])
+    paused_habits = len([h for h in all_habits if h.is_paused and not h.is_archived])
+    archived_habits = len([h for h in all_habits if h.is_archived])
+
+    # Calculate category counts
+    category_counts = {}
+    for habit in all_habits:
+        category = habit.category if habit.category else "Uncategorized"
+        category_counts[category] = category_counts.get(category, 0) + 1
+
+    # Sort categories by count (descending)
+    category_counts = sorted(category_counts.items(), key=lambda x: x[1], reverse=True)
+
+    # Get most recent and oldest habits
+    most_recent = Habit.query.order_by(Habit.created_at.desc()).first()
+    oldest = Habit.query.order_by(Habit.created_at.asc()).first()
+
+    return render_template(
+        "apps/habit_tracker/stats.html",
+        page_id="habit-tracker",
+        total_habits=total_habits,
+        active_habits=active_habits,
+        paused_habits=paused_habits,
+        archived_habits=archived_habits,
+        category_counts=category_counts,
+        most_recent=most_recent,
+        oldest=oldest,
+    )
+
+
 @app.route("/tips/disable", methods=["POST"])
 def disable_tips():
     """Disable tips for authenticated users"""
@@ -424,7 +459,6 @@ def inject_show_tips():
         show_tips = not (prefs and prefs.has_seen_tutorial)
     return dict(show_tips=show_tips)
 
-from datetime import datetime, timezone
 
 @app.context_processor
 def inject_today_date():
