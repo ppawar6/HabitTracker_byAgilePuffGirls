@@ -1119,7 +1119,7 @@ def test_disable_tips_endpoint(logged_in_client, app):
 
 
 
-# Search Habits Tests 
+# Search Habits Tests
 
 
 def test_search_habits_by_name(logged_in_client, app):
@@ -1372,7 +1372,7 @@ def test_search_requires_authentication(client):
     assert response.status_code == 302
     assert response.location == "/signin"
 
-  
+
 #  Export Habits to CSV Tests
 
 

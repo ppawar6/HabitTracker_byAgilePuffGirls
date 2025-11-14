@@ -37,7 +37,7 @@ def from_json_filter(value):
         return json.loads(value)
     except json.JSONDecodeError:
         return []
-    
+
 @app.template_filter("cat_styles")
 def cat_styles(category):
     """
@@ -180,7 +180,7 @@ def habit_tracker():
 
     # ---- GET: filters + sorting ----
     sort_by = request.args.get("sort", "priority")
-    
+
     # NEW: Search query parameter
     search_query = request.args.get("search", "").strip()
 
@@ -285,17 +285,17 @@ def export_habits_csv():
     """Export active habits to CSV file"""
     if not session.get("authenticated"):
         return redirect(url_for("signin"))
-    
+
     # Get all active habits (not archived, not paused)
     habits = Habit.query.filter_by(is_archived=False, is_paused=False).order_by(Habit.created_at.desc()).all()
-    
+
     # Create CSV in memory
     output = io.StringIO()
     writer = csv.writer(output)
-    
+
     # Write header
     writer.writerow(['Name', 'Description', 'Category', 'Priority', 'Created Date', 'Status'])
-    
+
     # Write habit data
     for habit in habits:
         writer.writerow([
@@ -306,12 +306,12 @@ def export_habits_csv():
             habit.created_at.strftime('%Y-%m-%d %H:%M:%S'),
             'Active'
         ])
-    
+
     # Prepare response
     output.seek(0)
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     filename = f'habits_export_{timestamp}.csv'
-    
+
     return Response(
         output.getvalue(),
         mimetype='text/csv',
