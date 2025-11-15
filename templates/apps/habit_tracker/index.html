@@ -156,6 +156,21 @@
         from { transform: translateY(20px); opacity: 0; }
         to { transform: translateY(0); opacity: 1; }
     }
+
+        /* Dark mode fix: make text + icons readable on color-coded habit cards */
+    [data-theme="dark"] .habit-card .text-gray-900,
+    [data-theme="dark"] .habit-card .text-gray-700,
+    [data-theme="dark"] .habit-card .text-gray-600,
+    [data-theme="dark"] .habit-card .text-gray-500 {
+        color: #111827; /* dark text on pastel background */
+    }
+
+    /* Dark mode fix: only habit name should always be readable */
+[data-theme="dark"] .habit-card .habit-name-display {
+    color: #111827;
+}
+
+
 </style>
 {% endblock %}
 
@@ -422,7 +437,11 @@
         {% if habits %}
             <div class="space-y-3 max-h-96 overflow-y-auto">
                 {% for habit in habits %}
-                <div class="group p-4 rounded-lg border border-gray-100 hover:border-purple-200 hover:bg-gradient-to-r hover:from-purple-50 hover:to-indigo-50 transition-all duration-200">
+                <div class="group habit-card p-4 rounded-lg border transition-all duration-200 hover:border-purple-200 hover:bg-gradient-to-r hover:from-purple-50 hover:to-indigo-50"
+     style="{{ habit.category|cat_styles }}">
+
+
+
                     <div class="flex items-start justify-between mb-2">
                         <div class="flex items-center gap-2 flex-1">
                             <form method="POST" action="/habit-tracker/toggle/{{ habit.id }}" class="inline">
@@ -511,10 +530,11 @@
                     {% endif %}
                     <div class="flex gap-3 ml-6">
                         {% if habit.category %}
-                            <span class="inline-flex items-center text-xs font-medium text-purple-700 bg-purple-100 px-3 py-1 rounded-full">
-                            {{ habit.category }}
-                            </span>
-                        {% endif %}
+  <span class="inline-flex items-center text-xs font-medium px-3 py-1 rounded-full" style="{{ habit.category|cat_styles }} background: var(--cat-pill-bg); color: var(--cat-pill-text);">
+    {{ habit.category }}
+  </span>
+{% endif %}
+
 
                         {% if habit.priority == 'High' %}
                             <span class="inline-flex items-center gap-1 text-xs font-medium text-red-700 bg-red-100 px-3 py-1 rounded-full">
