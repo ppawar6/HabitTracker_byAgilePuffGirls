@@ -535,6 +535,16 @@ def habit_stats():
         oldest=oldest,
     )
 
+@app.route("/habit-tracker/pomodoro")
+def pomodoro_timer():
+    """Pomodoro timer page"""
+    if not session.get("authenticated"):
+        return redirect(url_for("signin"))
+
+    return render_template(
+        "apps/habit_tracker/pomodoro.html",
+        page_id="habit-tracker",
+    )
 
 @app.route("/tips/disable", methods=["POST"])
 def disable_tips():

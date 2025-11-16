@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block title %}Pomodoro Timer • Student Starter Pack{% endblock %}
+
+{% block extra_head %}
+<style>
+    [data-theme="dark"] .bg-white {
+        background-color: var(--bg-primary);
+    }
+
+    [data-theme="dark"] .border-gray-200 {
+        border-color: var(--border-color);
+    }
+
+    [data-theme="dark"] .text-gray-900 {
+        color: var(--text-primary);
+    }
+
+    [data-theme="dark"] .text-gray-600,
+    [data-theme="dark"] .text-gray-500 {
+        color: var(--text-secondary);
+    }
+
+    [data-theme="dark"] .bg-gradient-to-br {
+        background: var(--bg-secondary);
+    }
+
+    [data-theme="dark"] #quoteText {
+    color: var(--text-primary) !important;
+}
+
+
+    .timer-card {
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .timer-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.15),
+                    0 10px 10px -5px rgba(79, 70, 229, 0.1);
+    }
+
+    .timer-display {
+        font-feature-settings: "tnum";
+    }
+
+    /* Force "Focus Quote" heading to be white in dark mode */
+[data-theme="dark"] .focus-quote-heading {
+    color: #ffffff !important;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl mx-auto">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-1">Pomodoro Timer</h1>
+                
+            </div>
+            <a href="{{ url_for('habit_tracker') }}"
+               class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Back to Tracker
+            </a>
+        </div>
+
+        <!-- Timer Card -->
+        <div class="timer-card bg-white rounded-2xl shadow-lg border border-gray-200 p-8 mb-6">
+            <!-- Mode selector -->
+            <div class="flex flex-wrap items-center justify-center gap-3 mb-6">
+                <button id="mode-focus"
+                        class="px-4 py-2 rounded-full text-sm font-medium bg-purple-600 text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    Focus • 25 min
+                </button>
+                <button id="mode-short"
+                        class="px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    Short Break • 5 min
+                </button>
+                <button id="mode-long"
+                        class="px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    Long Break • 15 min
+                </button>
+            </div>
+
+            <!-- Time display -->
+            <div class="flex flex-col items-center mb-6">
+                <div class="text-6xl sm:text-7xl font-bold text-gray-900 timer-display mb-2" id="timerDisplay">
+                    25:00
+                </div>
+                <p class="text-sm text-gray-500" id="modeLabel">
+                    Focus session
+                </p>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex flex-wrap items-center justify-center gap-4 mb-2">
+                <button id="startBtn"
+                        class="px-6 py-2.5 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium shadow-md hover:from-purple-700 hover:to-indigo-700 transition-all">
+                    ▶ Start
+                </button>
+                <button id="pauseBtn"
+                        class="px-6 py-2.5 rounded-full bg-gray-100 text-gray-800 font-medium hover:bg-gray-200 transition-all">
+                    ⏸ Pause
+                </button>
+                <button id="resetBtn"
+                        class="px-6 py-2.5 rounded-full bg-gray-100 text-gray-800 font-medium hover:bg-gray-200 transition-all">
+                    ↺ Reset
+                </button>
+            </div>
+
+            <p class="text-xs text-center text-gray-400">
+                Tip: Keep this tab open – the remaining time will appear in the browser tab title while the timer runs.
+            </p>
+        </div>
+
+        <!-- Quote card -->
+        <div class="bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-100 rounded-2xl p-6">
+            <div class="flex items-start gap-3">
+                <div class="mt-1">
+                    <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M7 8h10M7 12h4m1 8l-1-4H8a4 4 0 01-4-4V7a4 4 0 014-4h8a4 4 0 014 4v5a4 4 0 01-4 4h-2l-1 4h-2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-700 dark:text-gray-100 mb-1 focus-quote-heading">
+                        Focus Quote
+                    </p>
+
+
+                    <p id="quoteText" class="text-base text-gray-800 italic">
+                        Loading a little burst of motivation...
+                    </p>
+                    <p class="mt-2 text-xs text-gray-400">
+                        (Changes every 10 seconds to keep you gently nudged back into focus.)
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // --- Timer logic ---
+    const FOCUS_SECONDS = 25 * 60;
+    const SHORT_BREAK_SECONDS = 5 * 60;
+    const LONG_BREAK_SECONDS = 15 * 60;
+
+    let currentMode = "focus"; // "focus" | "short" | "long"
+    let remainingSeconds = FOCUS_SECONDS;
+    let timerInterval = null;
+    let isRunning = false;
+    const originalTitle = document.title;
+
+    const displayEl = document.getElementById("timerDisplay");
+    const modeLabelEl = document.getElementById("modeLabel");
+    const startBtn = document.getElementById("startBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    const btnFocus = document.getElementById("mode-focus");
+    const btnShort = document.getElementById("mode-short");
+    const btnLong = document.getElementById("mode-long");
+
+    function formatTime(seconds) {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        const mm = m.toString().padStart(2, "0");
+        const ss = s.toString().padStart(2, "0");
+        return `${mm}:${ss}`;
+    }
+
+    function updateDisplay() {
+        displayEl.textContent = formatTime(remainingSeconds);
+
+        if (isRunning) {
+            // Update browser tab while running
+            document.title = `${formatTime(remainingSeconds)} • Pomodoro`;
+        } else {
+            // Revert to original when stopped/paused
+            document.title = originalTitle;
+        }
+    }
+
+    function setMode(mode) {
+        currentMode = mode;
+        isRunning = false;
+        clearInterval(timerInterval);
+        timerInterval = null;
+
+        // Reset remaining time based on mode
+        if (mode === "focus") {
+            remainingSeconds = FOCUS_SECONDS;
+            modeLabelEl.textContent = "Focus session";
+        } else if (mode === "short") {
+            remainingSeconds = SHORT_BREAK_SECONDS;
+            modeLabelEl.textContent = "Short break";
+        } else {
+            remainingSeconds = LONG_BREAK_SECONDS;
+            modeLabelEl.textContent = "Long break";
+        }
+
+        // Button states
+        btnFocus.classList.remove("bg-gray-100", "text-gray-700");
+        btnShort.classList.remove("bg-gray-100", "text-gray-700");
+        btnLong.classList.remove("bg-gray-100", "text-gray-700");
+
+        btnFocus.classList.remove("bg-purple-600", "text-white");
+        btnShort.classList.remove("bg-purple-600", "text-white");
+        btnLong.classList.remove("bg-purple-600", "text-white");
+
+        if (mode === "focus") {
+            btnFocus.classList.add("bg-purple-600", "text-white");
+            btnShort.classList.add("bg-gray-100", "text-gray-700");
+            btnLong.classList.add("bg-gray-100", "text-gray-700");
+        } else if (mode === "short") {
+            btnShort.classList.add("bg-purple-600", "text-white");
+            btnFocus.classList.add("bg-gray-100", "text-gray-700");
+            btnLong.classList.add("bg-gray-100", "text-gray-700");
+        } else {
+            btnLong.classList.add("bg-purple-600", "text-white");
+            btnFocus.classList.add("bg-gray-100", "text-gray-700");
+            btnShort.classList.add("bg-gray-100", "text-gray-700");
+        }
+
+        updateDisplay();
+    }
+
+    function startTimer() {
+        if (isRunning) return;
+        isRunning = true;
+
+        timerInterval = setInterval(() => {
+            remainingSeconds -= 1;
+            if (remainingSeconds <= 0) {
+                remainingSeconds = 0;
+                clearInterval(timerInterval);
+                isRunning = false;
+                // Final update and simple "time's up" title
+                updateDisplay();
+                document.title = "Time's up! • Pomodoro";
+            } else {
+                updateDisplay();
+            }
+        }, 1000);
+
+        updateDisplay();
+    }
+
+    function pauseTimer() {
+        isRunning = false;
+        clearInterval(timerInterval);
+        timerInterval = null;
+        updateDisplay();
+    }
+
+    function resetTimer() {
+        setMode(currentMode);
+    }
+
+    // Event listeners
+    startBtn.addEventListener("click", startTimer);
+    pauseBtn.addEventListener("click", pauseTimer);
+    resetBtn.addEventListener("click", resetTimer);
+
+    btnFocus.addEventListener("click", () => setMode("focus"));
+    btnShort.addEventListener("click", () => setMode("short"));
+    btnLong.addEventListener("click", () => setMode("long"));
+
+    // Initial paint
+    setMode("focus");
+
+    // --- Quote rotation ---
+    const quotes = [
+        "Small, consistent focus sessions beat one giant all-nighter.",
+        "You don’t have to finish everything today — just this next block.",
+        "Protect your focus like it’s your superpower. Because it is.",
+        "Five minutes of real focus is better than thirty minutes of half-scrolling.",
+        "Deep work now, soft life later.",
+        "Your future self is quietly cheering you on right now.",
+        "Discipline is just self-kindness scheduled in advance.",
+        "Every focused session is a tiny promise kept to yourself."
+    ];
+
+    const quoteEl = document.getElementById("quoteText");
+    let quoteIndex = 0;
+
+    function updateQuote() {
+        quoteEl.textContent = quotes[quoteIndex];
+        quoteIndex = (quoteIndex + 1) % quotes.length;
+    }
+
+    updateQuote();
+    setInterval(updateQuote, 10000); // change every 10 seconds
+
+    // Clean up on page unload
+    window.addEventListener("beforeunload", function () {
+        clearInterval(timerInterval);
+    });
+});
+</script>
+{% endblock %}
