@@ -127,3 +127,43 @@ def test_pomodoro_navbar_button_visible_in_base_template(authenticated_client):
 
     # Button label visible
     assert "Pomodoro Timer" in data
+def test_pomodoro_info_modal_present(authenticated_client, pomodoro_url):
+    """Pomodoro page should render the info modal container."""
+    response = authenticated_client.get(pomodoro_url)
+    assert response.status_code == 200
+
+    data = response.data.decode("utf-8")
+
+    # Modal wrapper and heading
+    assert 'id="pomodoroInfoModal"' in data
+    assert "Why use the Pomodoro Timer?" in data
+
+    # Check that it's initially hidden via the utility class
+    assert "bg-black/40 hidden" in data or "bg-black/40  hidden" in data
+
+
+def test_pomodoro_info_modal_has_action_buttons(authenticated_client, pomodoro_url):
+    """Pomodoro info modal should include both action buttons."""
+    response = authenticated_client.get(pomodoro_url)
+    assert response.status_code == 200
+
+    data = response.data.decode("utf-8")
+
+    # Buttons by id
+    assert 'id="pomodoroInfoLater"' in data
+    assert 'id="pomodoroInfoGotIt"' in data
+
+    # Button labels
+    assert "Ok" in data
+    assert "Don’t show this again" in data  # covers "Got it, let’s focus"
+
+
+def test_pomodoro_info_modal_not_on_stats_page(authenticated_client):
+    """Pomodoro info modal should not be injected on unrelated pages like stats."""
+    response = authenticated_client.get("/habit-tracker/stats")
+    assert response.status_code == 200
+
+    data = response.data.decode("utf-8")
+
+    # Ensure the modal id is not present on the stats page
+    assert "pomodoroInfoModal" not in data
