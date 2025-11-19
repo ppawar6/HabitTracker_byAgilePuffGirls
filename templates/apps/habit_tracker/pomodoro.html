@@ -49,6 +49,41 @@
     color: #ffffff !important;
 }
 
+    /* Make Pomodoro info modal text readable in dark mode */
+[data-theme="dark"] #pomodoroInfoModal p,
+[data-theme="dark"] #pomodoroInfoModal li {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] #pomodoroInfoModal .text-xs {
+    color: var(--text-secondary);
+}
+
+
+    [data-theme="dark"] .text-gray-400 {
+        color: var(--text-secondary);
+    }
+
+    /* Ensure Pomodoro info modal text is readable in dark mode */
+    [data-theme="dark"] #pomodoroInfoModal p,
+    [data-theme="dark"] #pomodoroInfoModal li {
+        color: var(--text-primary);
+    }
+
+    [data-theme="dark"] #pomodoroInfoModal .text-xs {
+        color: var(--text-secondary);
+    }
+
+        [data-theme="dark"] #pomodoroInfoGotIt {
+        background-color: #7c3aed; /* purple-600 */
+        color: #ffffff;
+    }
+
+    [data-theme="dark"] #pomodoroInfoGotIt:hover {
+        background-color: #6d28d9; /* purple-700 */
+    }
+
+
 </style>
 {% endblock %}
 
@@ -143,6 +178,48 @@
                     </p>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pomodoro info pop-up -->
+<div id="pomodoroInfoModal"
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 hidden">
+    <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-w-lg w-full mx-4 p-6 border border-gray-200 dark:border-gray-700">
+        <div class="flex justify-between items-start mb-4">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+                Why use the Pomodoro Timer? 🍅
+            </h2>
+            <button id="pomodoroInfoClose"
+                    class="text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-white">
+                <span class="sr-only">Close</span>
+                ✕
+            </button>
+        </div>
+
+        <p class="text-sm text-gray-700 dark:text-gray-200 mb-3">
+            The Pomodoro Technique breaks your work into short, focused blocks
+            (usually 25 minutes) followed by a quick break.
+        </p>
+        <ul class="list-disc pl-5 text-sm text-gray-700 dark:text-gray-200 space-y-1 mb-4">
+            <li>Reduces procrastination by making tasks feel smaller.</li>
+            <li>Protects your focus with clear “work” and “break” boundaries.</li>
+            <li>Prevents burnout by scheduling rest on purpose.</li>
+        </ul>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-5">
+            Tip: Use a few Pomodoro sessions for deep work like studying, writing,
+            or debugging, and track how many you complete in a day.
+        </p>
+
+        <div class="flex justify-end gap-2">
+            <button id="pomodoroInfoLater"
+                    class="px-3 py-2 text-xs sm:text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
+                Ok
+            </button>
+            <button id="pomodoroInfoGotIt"
+                    class="px-4 py-2 text-xs sm:text-sm rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700">
+                Don’t show this again
+            </button>
         </div>
     </div>
 </div>
@@ -300,6 +377,51 @@ document.addEventListener("DOMContentLoaded", function () {
 
     updateQuote();
     setInterval(updateQuote, 10000); // change every 10 seconds
+
+
+    // --- Pomodoro info pop-up logic ---
+    const infoModal = document.getElementById("pomodoroInfoModal");
+    const infoClose = document.getElementById("pomodoroInfoClose");
+    const infoLater = document.getElementById("pomodoroInfoLater");
+    const infoGotIt = document.getElementById("pomodoroInfoGotIt");
+
+    function openPomodoroInfoIfNeeded() {
+        if (!infoModal) return;
+        const alreadySeen = localStorage.getItem("pomodoroInfoSeen") === "true";
+        if (!alreadySeen) {
+            infoModal.classList.remove("hidden");
+        }
+    }
+
+    function hidePomodoroInfo() {
+        if (!infoModal) return;
+        infoModal.classList.add("hidden");
+    }
+
+    if (infoClose) {
+        infoClose.addEventListener("click", () => {
+            hidePomodoroInfo();
+            // Don’t mark as seen so it can show again later
+        });
+    }
+
+    if (infoLater) {
+        infoLater.addEventListener("click", () => {
+            hidePomodoroInfo();
+            // Also don’t mark as seen – they asked to be reminded
+        });
+    }
+
+    if (infoGotIt) {
+        infoGotIt.addEventListener("click", () => {
+            hidePomodoroInfo();
+            // Mark as seen so we only show it once per browser
+            localStorage.setItem("pomodoroInfoSeen", "true");
+        });
+    }
+
+    // Open on page load (if not seen before)
+    openPomodoroInfoIfNeeded();
 
     // Clean up on page unload
     window.addEventListener("beforeunload", function () {
