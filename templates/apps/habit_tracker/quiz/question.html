@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}Quiz Question {{ current }} of {{ total }} • Student Starter Pack{% endblock %}
+
+{% block extra_head %}
+<style>
+    [data-theme="dark"] .bg-white {
+        background-color: var(--bg-primary);
+    }
+
+    [data-theme="dark"] .text-gray-900 {
+        color: var(--text-primary);
+    }
+
+    [data-theme="dark"] .text-gray-700,
+    [data-theme="dark"] .text-gray-600,
+    [data-theme="dark"] .text-gray-500 {
+        color: var(--text-secondary);
+    }
+
+    [data-theme="dark"] .bg-gradient-to-br.from-purple-50.to-indigo-100 {
+        background: linear-gradient(to bottom right, var(--bg-secondary), var(--bg-primary));
+    }
+
+    [data-theme="dark"] .bg-gray-200 {
+        background-color: var(--bg-secondary);
+    }
+
+    [data-theme="dark"] .border-gray-200 {
+        border-color: var(--border-color);
+    }
+
+    [data-theme="dark"] .border-gray-300 {
+        border-color: var(--border-color);
+    }
+
+    [data-theme="dark"] .hover\:border-purple-300:hover {
+        border-color: rgba(139, 92, 246, 0.5);
+    }
+
+    [data-theme="dark"] .hover\:bg-purple-50:hover {
+        background-color: rgba(139, 92, 246, 0.1);
+    }
+
+    /* Dark mode: Selected quiz option styling */
+    [data-theme="dark"] .quiz-option:checked + .quiz-option-card {
+        background-color: rgba(139, 92, 246, 0.3) !important;
+        border-color: #a78bfa !important;
+    }
+
+    [data-theme="dark"] .quiz-option:checked + .quiz-option-card .text-gray-900 {
+        color: var(--text-primary) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 py-12 px-4">
+    <div class="max-w-2xl mx-auto">
+
+        <!-- Progress Bar -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-medium text-gray-700">Question {{ current }} of {{ total }}</span>
+                <span class="text-sm font-medium text-purple-600">{{ progress }}%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-3">
+                <div class="bg-gradient-to-r from-purple-600 to-indigo-600 h-3 rounded-full transition-all duration-300"
+                     style="width: {{ progress }}%"></div>
+            </div>
+        </div>
+
+        <!-- Question Card -->
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+
+            <!-- Question Text -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">
+                    {{ question.question_text }}
+                </h2>
+            </div>
+
+            <!-- Answer Form -->
+            <form method="POST" action="{{ url_for('quiz.answer') }}" id="quizForm">
+                <input type="hidden" name="question_id" value="{{ question.id }}">
+                <input type="hidden" name="current" value="{{ current }}">
+                <input type="hidden" name="total" value="{{ total }}">
+
+                <div class="space-y-3 mb-8">
+                    <!-- Option A -->
+                    <label class="block cursor-pointer">
+                        <input type="radio" name="answer" value="A" class="hidden quiz-option" required>
+                        <div class="quiz-option-card border-2 border-gray-200 rounded-xl p-4 hover:border-purple-300 hover:bg-purple-50 transition-all duration-200">
+                            <div class="flex items-center gap-3">
+                                <div class="quiz-radio w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0">
+                                    <div class="w-3 h-3 rounded-full bg-purple-600 hidden"></div>
+                                </div>
+                                <span class="text-gray-900 font-medium">{{ question.option_a }}</span>
+                            </div>
+                        </div>
+                    </label>
+
+                    <!-- Option B -->
+                    <label class="block cursor-pointer">
+                        <input type="radio" name="answer" value="B" class="hidden quiz-option" required>
+                        <div class="quiz-option-card border-2 border-gray-200 rounded-xl p-4 hover:border-purple-300 hover:bg-purple-50 transition-all duration-200">
+                            <div class="flex items-center gap-3">
+                                <div class="quiz-radio w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0">
+                                    <div class="w-3 h-3 rounded-full bg-purple-600 hidden"></div>
+                                </div>
+                                <span class="text-gray-900 font-medium">{{ question.option_b }}</span>
+                            </div>
+                        </div>
+                    </label>
+
+                    <!-- Option C -->
+                    <label class="block cursor-pointer">
+                        <input type="radio" name="answer" value="C" class="hidden quiz-option" required>
+                        <div class="quiz-option-card border-2 border-gray-200 rounded-xl p-4 hover:border-purple-300 hover:bg-purple-50 transition-all duration-200">
+                            <div class="flex items-center gap-3">
+                                <div class="quiz-radio w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0">
+                                    <div class="w-3 h-3 rounded-full bg-purple-600 hidden"></div>
+                                </div>
+                                <span class="text-gray-900 font-medium">{{ question.option_c }}</span>
+                            </div>
+                        </div>
+                    </label>
+
+                    <!-- Option D -->
+                    <label class="block cursor-pointer">
+                        <input type="radio" name="answer" value="D" class="hidden quiz-option" required>
+                        <div class="quiz-option-card border-2 border-gray-200 rounded-xl p-4 hover:border-purple-300 hover:bg-purple-50 transition-all duration-200">
+                            <div class="flex items-center gap-3">
+                                <div class="quiz-radio w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0">
+                                    <div class="w-3 h-3 rounded-full bg-purple-600 hidden"></div>
+                                </div>
+                                <span class="text-gray-900 font-medium">{{ question.option_d }}</span>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Navigation Buttons -->
+                <div class="flex justify-between items-center">
+                    {% if current > 1 %}
+                    <a href="{{ url_for('quiz.question', question_num=current-1) }}"
+                       class="inline-flex items-center gap-2 px-6 py-3 border-2 border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-all duration-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                        <span>Back</span>
+                    </a>
+                    {% else %}
+                    <div></div>
+                    {% endif %}
+
+                    <button type="submit" id="nextBtn" disabled
+                            class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                        <span>{% if current == total %}See Results{% else %}Next{% endif %}</span>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Exit Link -->
+        <div class="text-center mt-6">
+            <a href="{{ url_for('habit_tracker') }}" class="text-gray-500 hover:text-gray-700 text-sm">
+                Exit quiz
+            </a>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .quiz-option:checked + .quiz-option-card {
+        border-color: #7c3aed;
+        background-color: #f5f3ff;
+    }
+    .quiz-option:checked + .quiz-option-card .quiz-radio {
+        border-color: #7c3aed;
+    }
+    .quiz-option:checked + .quiz-option-card .quiz-radio div {
+        display: block;
+    }
+</style>
+
+<script>
+    // Enable next button when an option is selected
+    const radioButtons = document.querySelectorAll('.quiz-option');
+    const nextBtn = document.getElementById('nextBtn');
+
+    radioButtons.forEach(radio => {
+        radio.addEventListener('change', function() {
+            nextBtn.disabled = false;
+        });
+    });
+</script>
+{% endblock %}

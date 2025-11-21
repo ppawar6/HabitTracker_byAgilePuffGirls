@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}Your Habit Personality • Student Starter Pack{% endblock %}
+
+{% block extra_head %}
+<style>
+    [data-theme="dark"] .bg-white {
+        background-color: var(--bg-primary);
+    }
+
+    [data-theme="dark"] .text-gray-900 {
+        color: var(--text-primary);
+    }
+
+    [data-theme="dark"] .text-gray-700,
+    [data-theme="dark"] .text-gray-600,
+    [data-theme="dark"] .text-gray-500 {
+        color: var(--text-secondary);
+    }
+
+    [data-theme="dark"] .bg-gradient-to-br.from-purple-50.to-indigo-100 {
+        background: linear-gradient(to bottom right, var(--bg-secondary), var(--bg-primary));
+    }
+
+    [data-theme="dark"] .border-gray-200 {
+        border-color: var(--border-color);
+    }
+
+    [data-theme="dark"] .border-gray-300 {
+        border-color: var(--border-color);
+    }
+
+    [data-theme="dark"] .hover\:border-purple-300:hover {
+        border-color: rgba(139, 92, 246, 0.5);
+    }
+
+    [data-theme="dark"] .bg-green-100 {
+        background-color: rgba(34, 197, 94, 0.2);
+    }
+
+    [data-theme="dark"] .bg-red-100 {
+        background-color: rgba(239, 68, 68, 0.2);
+    }
+
+    [data-theme="dark"] .text-green-600 {
+        color: #4ade80;
+    }
+
+    [data-theme="dark"] .text-red-600 {
+        color: #f87171;
+    }
+
+    [data-theme="dark"] .text-purple-600 {
+        color: #c084fc;
+    }
+
+    [data-theme="dark"] .text-blue-600 {
+        color: #60a5fa;
+    }
+
+    [data-theme="dark"] .text-indigo-600 {
+        color: #818cf8;
+    }
+
+    [data-theme="dark"] .bg-gray-100 {
+        background-color: var(--bg-secondary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 py-12 px-4">
+    <div class="max-w-4xl mx-auto">
+
+        <!-- Personality Profile Header -->
+        <div class="text-center mb-8">
+            <div class="inline-block bg-white rounded-full p-6 shadow-lg mb-4">
+                <span class="text-6xl">{{ personality.emoji }}</span>
+            </div>
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">You're a {{ personality.name }}!</h1>
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto">{{ personality.description }}</p>
+        </div>
+
+        <!-- Personality Profile Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center gap-3 mb-2">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h3 class="font-semibold text-gray-900">Peak Time</h3>
+                </div>
+                <p class="text-gray-600">{{ personality.peak_time }}</p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center gap-3 mb-2">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    <h3 class="font-semibold text-gray-900">Energy Level</h3>
+                </div>
+                <p class="text-gray-600">{{ personality.energy_level }}</p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center gap-3 mb-2">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h3 class="font-semibold text-gray-900">Motivation Style</h3>
+                </div>
+                <p class="text-gray-600">{{ personality.motivation_style }}</p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center gap-3 mb-2">
+                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                    </svg>
+                    <h3 class="font-semibold text-gray-900">Commitment Level</h3>
+                </div>
+                <p class="text-gray-600">{{ personality.commitment_level }}</p>
+            </div>
+        </div>
+
+        <!-- Recommended Habits Section -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 mb-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Your Personalized Habit Recommendations</h2>
+            <p class="text-gray-600 mb-6">These habits are scientifically matched to your personality type. Select the ones you'd like to start tracking:</p>
+
+            <form method="POST" action="{{ url_for('quiz.add_habits') }}">
+                <div class="space-y-4 mb-6">
+                    {% for habit in recommendations %}
+                    <label class="block cursor-pointer">
+                        <input type="checkbox" name="habit_ids" value="{{ habit.id }}" class="hidden habit-checkbox">
+                        <div class="habit-card border-2 border-gray-200 rounded-xl p-4 hover:border-purple-300 transition-all duration-200">
+                            <div class="flex items-start gap-4">
+                                <div class="habit-checkbox-indicator flex-shrink-0 w-6 h-6 mt-1 rounded border-2 border-gray-300 flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-white hidden" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="font-semibold text-gray-900 mb-1">{{ habit.name }}</h3>
+                                    <p class="text-gray-600 text-sm mb-2">{{ habit.description }}</p>
+                                    <div class="flex items-center gap-4 text-sm">
+                                        <span class="inline-flex items-center gap-1 text-purple-600">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                                            </svg>
+                                            {{ habit.category }}
+                                        </span>
+                                        <span class="inline-flex items-center gap-1 text-gray-500">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            {{ habit.reason }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+
+                <div class="flex justify-center">
+                    <button type="submit" class="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-lg font-semibold rounded-xl hover:from-purple-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-200 shadow-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        <span>Add Selected Habits to My Tracker</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Insights Section -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 mb-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Success Insights for You</h2>
+            <div class="space-y-3">
+                {% for insight in insights %}
+                <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0 w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <p class="text-gray-700 flex-1">{{ insight }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Habits to Avoid Section -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 mb-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Habits That May Not Work for You</h2>
+            <p class="text-gray-600 mb-4">Based on your personality type, these habits might be harder to maintain:</p>
+            <div class="space-y-3">
+                {% for habit in avoid_habits %}
+                <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0 w-6 h-6 bg-red-100 rounded-full flex items-center justify-center mt-0.5">
+                        <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </div>
+                    <p class="text-gray-700 flex-1">{{ habit }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+            <a href="{{ url_for('quiz.start') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-purple-600 text-purple-600 font-semibold rounded-xl hover:bg-purple-50 transition-all duration-200">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                <span>Retake Quiz</span>
+            </a>
+            <a href="{{ url_for('habit_tracker') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all duration-200">
+                <span>Go to My Habits</span>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                </svg>
+            </a>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .habit-checkbox:checked + .habit-card {
+        border-color: #7c3aed;
+        background-color: #f5f3ff;
+    }
+    .habit-checkbox:checked + .habit-card .habit-checkbox-indicator {
+        background-color: #7c3aed;
+        border-color: #7c3aed;
+    }
+    .habit-checkbox:checked + .habit-card .habit-checkbox-indicator svg {
+        display: block;
+    }
+</style>
+{% endblock %}
