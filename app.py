@@ -25,6 +25,14 @@ def ensure_tables_exist():
     global tables_created
     if not tables_created:
         db.create_all()
+
+        # Auto-seed quiz data if not exists
+        if QuizQuestion.query.count() == 0:
+            from seed_quiz_data import seed_quiz_questions, seed_personality_types, seed_habit_templates
+            seed_quiz_questions()
+            seed_personality_types()
+            seed_habit_templates()
+
         tables_created = True
 
 
