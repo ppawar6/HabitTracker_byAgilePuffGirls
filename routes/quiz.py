@@ -147,7 +147,7 @@ def add_habits():
     added_count = 0
 
     for template_id in habit_template_ids:
-        template = HabitTemplate.query.get(int(template_id))
+        template = db.session.get(HabitTemplate, int(template_id))
 
         if template:
             # Check if habit already exists for this user
@@ -199,7 +199,7 @@ def calculate_personality(answers):
 
     # Calculate scores by category
     for question_id, answer in answers.items():
-        question = QuizQuestion.query.get(int(question_id))
+        question = db.session.get(QuizQuestion, int(question_id))
         if question:
             category = question.scoring_category
             # Convert A, B, C, D to 1, 2, 3, 4
