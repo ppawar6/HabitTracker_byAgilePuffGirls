@@ -37,6 +37,7 @@ omit = [
     ".venv/*",
     "venv/*",
     "*/site-packages/*",
+    "seed_quiz_data.py",
 ]
 
 [tool.coverage.report]
