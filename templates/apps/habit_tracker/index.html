@@ -194,15 +194,25 @@
             </div>
         </div>
 
-        {% if habits %}
-        <button onclick="openShareModal()"
-            class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-md hover:shadow-lg">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
-            </svg>
-            <span class="font-medium">Share Progress</span>
-        </button>
-        {% endif %}
+        <div class="flex items-center gap-3">
+            {% if habits %}
+            <button onclick="openShareModal()"
+                class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-md hover:shadow-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+                </svg>
+                <span class="font-medium">Share Progress</span>
+            </button>
+
+            <!-- Emergency Pause Button -->
+            <button onclick="openEmergencyPauseModal()"
+                class="flex items-center gap-2 px-4 py-2 bg-white border-2 border-red-400 text-red-600 rounded-lg hover:bg-red-50 transition-all duration-200 shadow-md hover:shadow-lg group"
+                title="Emergency Pause - Pause All Habits">
+                <span class="text-2xl group-hover:animate-pulse">🚨</span>
+                <span class="font-semibold">Emergency Pause</span>
+            </button>
+            {% endif %}
+        </div>
     </div>
 </div>
 
@@ -881,6 +891,218 @@ document.getElementById('shareModal').addEventListener('click', function(e) {
     url.searchParams.delete('priority');
     window.location.href = url.pathname; // reset to defaults
   }
+
+  // ===== EMERGENCY PAUSE FEATURE =====
+
+  // Check emergency pause status on page load
+  async function checkEmergencyPauseStatus() {
+    console.log('[FRONTEND] Checking emergency pause status on page load');
+
+    try {
+      const response = await fetch('/habit-tracker/emergency/status');
+      const data = await response.json();
+
+      console.log('[FRONTEND] Emergency pause status:', data);
+
+      if (data.is_paused) {
+        console.log('[FRONTEND] Emergency pause is active, showing banner');
+        showPausedBanner(data);
+      } else {
+        console.log('[FRONTEND] No active emergency pause');
+      }
+    } catch (error) {
+      console.error('[FRONTEND] Error checking emergency pause status:', error);
+    }
+  }
+
+  function showPausedBanner(data) {
+    const banner = document.createElement('div');
+    banner.id = 'emergency-pause-banner';
+    banner.className = 'fixed top-0 left-0 right-0 bg-orange-500 text-white py-3 px-4 shadow-lg';
+    banner.style.zIndex = '9999'; // Very high z-index to appear above everything
+    banner.innerHTML = `
+      <div class="container mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">⏸️</span>
+          <div>
+            <strong>Emergency Pause Active</strong>
+            <p class="text-sm text-orange-100">
+              ${data.reason || 'Taking a break'} • ${data.days_remaining} days remaining
+            </p>
+          </div>
+        </div>
+        <button onclick="resumeEmergencyPause()" class="bg-white text-orange-600 px-4 py-2 rounded-lg font-semibold hover:bg-orange-50 transition-colors">
+          Resume Habits
+        </button>
+      </div>
+    `;
+    document.body.prepend(banner);
+
+    // Add padding to body so content doesn't get hidden behind banner
+    document.body.style.paddingTop = '60px';
+  }
+
+  async function openEmergencyPauseModal() {
+    document.getElementById('emergencyPauseModal').classList.remove('hidden');
+  }
+
+  function closeEmergencyPauseModal() {
+    document.getElementById('emergencyPauseModal').classList.add('hidden');
+  }
+
+  async function activateEmergencyPause() {
+    const reason = document.getElementById('pauseReason').value;
+    const durationDays = document.getElementById('pauseDuration').value;
+
+    if (!reason.trim()) {
+      alert('Please provide a reason for the pause');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('reason', reason);
+      formData.append('duration_days', durationDays);
+
+      const response = await fetch('/habit-tracker/emergency/pause', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        closeEmergencyPauseModal();
+        window.location.reload(); // Reload to show paused state
+      } else {
+        alert(data.error || 'Failed to activate emergency pause');
+      }
+    } catch (error) {
+      console.error('Error activating emergency pause:', error);
+      alert('Failed to activate emergency pause');
+    }
+  }
+
+  async function resumeEmergencyPause() {
+    console.log('[FRONTEND] resumeEmergencyPause() called');
+
+    if (!confirm('Are you ready to resume tracking your habits?')) {
+      console.log('[FRONTEND] User cancelled resume');
+      return;
+    }
+
+    console.log('[FRONTEND] Sending POST request to /habit-tracker/emergency/resume');
+
+    try {
+      const response = await fetch('/habit-tracker/emergency/resume', {
+        method: 'POST'
+      });
+
+      console.log('[FRONTEND] Response status:', response.status);
+      const data = await response.json();
+      console.log('[FRONTEND] Response data:', data);
+
+      if (data.success) {
+        console.log('[FRONTEND] Resume successful, reloading page');
+
+        // Remove banner and padding before reload
+        const banner = document.getElementById('emergency-pause-banner');
+        if (banner) {
+          banner.remove();
+        }
+        document.body.style.paddingTop = '0';
+
+        window.location.reload(); // Reload to remove paused state
+      } else {
+        console.error('[FRONTEND] Resume failed:', data.error);
+        alert(data.error || 'Failed to resume');
+      }
+    } catch (error) {
+      console.error('[FRONTEND] Error resuming from emergency pause:', error);
+      alert('Failed to resume');
+    }
+  }
+
+  // Check status on page load
+  window.addEventListener('DOMContentLoaded', checkEmergencyPauseStatus);
 </script>
+
+
+<!-- Emergency Pause Modal -->
+<div id="emergencyPauseModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
+    <!-- Header -->
+    <div class="text-center mb-6">
+      <div class="bg-red-100 rounded-full w-20 h-20 mx-auto flex items-center justify-center mb-4">
+        <span class="text-5xl">🚨</span>
+      </div>
+      <h2 class="text-2xl font-bold text-gray-900 mb-2">Emergency Pause</h2>
+      <p class="text-gray-600 text-sm">
+        Life getting overwhelming? It's okay to pause and protect your progress.
+      </p>
+    </div>
+
+    <!-- Form -->
+    <div class="space-y-4">
+      <!-- Reason -->
+      <div>
+        <label for="pauseReason" class="block text-sm font-medium text-gray-700 mb-1">
+          What's happening? <span class="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          id="pauseReason"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+          placeholder="e.g., Moving house, Exam week, Family emergency"
+          required
+        />
+      </div>
+
+      <!-- Duration -->
+      <div>
+        <label for="pauseDuration" class="block text-sm font-medium text-gray-700 mb-1">
+          How long do you need?
+        </label>
+        <select
+          id="pauseDuration"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+        >
+          <option value="3">3 days</option>
+          <option value="5">5 days</option>
+          <option value="7" selected>1 week</option>
+          <option value="14">2 weeks</option>
+          <option value="30">1 month</option>
+        </select>
+      </div>
+
+      <!-- What happens info box -->
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
+        <strong class="text-blue-900">What happens during pause:</strong>
+        <ul class="mt-2 text-blue-800 space-y-1">
+          <li>✓ All habits frozen (not failed)</li>
+          <li>✓ Streaks protected</li>
+          <li>✓ No guilt, no pressure</li>
+          <li>✓ Auto-resume when ready</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex gap-3 mt-6">
+      <button
+        onclick="closeEmergencyPauseModal()"
+        class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-semibold transition-colors"
+      >
+        Cancel
+      </button>
+      <button
+        onclick="activateEmergencyPause()"
+        class="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg hover:from-red-600 hover:to-orange-600 font-semibold shadow-lg transform hover:scale-105 transition-all"
+      >
+        Activate Pause
+      </button>
+    </div>
+  </div>
+</div>
 
 {% endblock %}
