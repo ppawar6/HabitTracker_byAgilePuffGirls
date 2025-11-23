@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from flask import Flask, Response, jsonify, redirect, render_template, request, session, url_for
 
 from extensions import db
-from models import Habit, UserPreferences
+from models import Habit, UserPreferences, QuizQuestion, PersonalityType, HabitTemplate, UserQuizResult
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "dev-secret-key-change-in-production"
@@ -25,6 +25,14 @@ def ensure_tables_exist():
     global tables_created
     if not tables_created:
         db.create_all()
+
+        # Auto-seed quiz data if not exists
+        if QuizQuestion.query.count() == 0:
+            from seed_quiz_data import seed_quiz_questions, seed_personality_types, seed_habit_templates
+            seed_quiz_questions()
+            seed_personality_types()
+            seed_habit_templates()
+
         tables_created = True
 
 
@@ -59,10 +67,12 @@ def cat_styles(category):
 from routes.habits import habits_bp  # noqa: E402
 from routes.notifications import create_notification, notifications_bp  # noqa: E402
 from routes.theme import theme_bp  # noqa: E402
+from routes.quiz import quiz_bp  # noqa: E402
 
 app.register_blueprint(theme_bp)
 app.register_blueprint(habits_bp)
 app.register_blueprint(notifications_bp)
+app.register_blueprint(quiz_bp)
 
 # Store OTPs temporarily
 otp_store = {}
