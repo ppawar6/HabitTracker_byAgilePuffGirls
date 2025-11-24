@@ -96,3 +96,16 @@ class UserQuizResult(db.Model):
     )
     quiz_answers = db.Column(db.Text)  # JSON string of question_id: answer pairs
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class EmergencyPause(db.Model):
+    """Store emergency pause status for users - Break Glass feature"""
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)  # User can have multiple pause records (history)
+    is_active = db.Column(db.Boolean, default=True)  # Whether pause is currently active
+    reason = db.Column(db.String(500))  # Why user paused (e.g., "Moving house")
+    duration_days = db.Column(db.Integer)  # How many days to pause
+    started_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    ends_at = db.Column(db.DateTime)  # When pause should auto-resume
+    ended_at = db.Column(db.DateTime, nullable=True)  # When user manually resumed
