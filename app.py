@@ -80,8 +80,7 @@ def cat_styles(category):
     )
 
 
-# NOTE: emergency_pause blueprint will be available after merging with develop
-# from routes.emergency_pause import emergency_bp  # noqa: E402
+from routes.emergency_pause import emergency_bp  # noqa: E402
 from routes.habits import habits_bp  # noqa: E402
 from routes.notifications import create_notification, notifications_bp  # noqa: E402
 from routes.quiz import quiz_bp  # noqa: E402
@@ -91,8 +90,7 @@ app.register_blueprint(theme_bp)
 app.register_blueprint(habits_bp)
 app.register_blueprint(notifications_bp)
 app.register_blueprint(quiz_bp)
-# NOTE: emergency_bp will be registered after merging with develop
-# app.register_blueprint(emergency_bp)
+app.register_blueprint(emergency_bp)
 
 # Store OTPs temporarily
 otp_store = {}
