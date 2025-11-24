@@ -150,7 +150,7 @@ def test_activate_pause_calculates_end_date(logged_in_client, app):
         'duration_days': '14'
     })
 
-    data = json.loads(response.data)
+    json.loads(response.data)
     assert response.status_code == 200
 
     with app.app_context():
@@ -505,7 +505,7 @@ def test_pause_after_resume_creates_new_record(logged_in_client, app):
 
     # This will fail because user_id is unique, even for inactive pauses
     # We need to update the route to handle this
-    data = json.loads(response.data)
+    json.loads(response.data)
     # For now, this will return an error, which is expected behavior
 
 

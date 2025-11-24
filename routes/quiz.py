@@ -3,9 +3,11 @@ Quiz routes for Habit Personality Assessment
 """
 
 import json
-from flask import Blueprint, redirect, render_template, request, session, url_for, flash
+
+from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+
 from extensions import db
-from models import QuizQuestion, PersonalityType, HabitTemplate, UserQuizResult, Habit
+from models import Habit, HabitTemplate, PersonalityType, QuizQuestion, UserQuizResult
 
 quiz_bp = Blueprint('quiz', __name__, url_prefix='/habit-tracker/quiz')
 

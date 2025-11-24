@@ -4,7 +4,7 @@ Emergency Pause routes for Break Glass feature
 
 from datetime import datetime, timedelta, timezone
 
-from flask import Blueprint, jsonify, redirect, request, session, url_for
+from flask import Blueprint, jsonify, request, session
 
 from extensions import db
 from models import EmergencyPause, Habit
@@ -131,7 +131,7 @@ def resume():
 
     print(f"[DEBUG RESUME] About to commit. Resumed {resumed_count} habits")
     db.session.commit()
-    print(f"[DEBUG RESUME] Commit completed")
+    print("[DEBUG RESUME] Commit completed")
 
     # Verify the change was persisted
     verification = db.session.get(EmergencyPause, active_pause.id)

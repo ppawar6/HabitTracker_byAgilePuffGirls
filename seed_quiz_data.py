@@ -4,9 +4,10 @@ Run this script to populate quiz questions, personality types, and habit templat
 """
 
 import json
+
 from app import app
 from extensions import db
-from models import QuizQuestion, PersonalityType, HabitTemplate
+from models import HabitTemplate, PersonalityType, QuizQuestion
 
 
 def seed_quiz_questions():

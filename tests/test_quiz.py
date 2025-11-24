@@ -11,11 +11,11 @@ This module tests the quiz functionality including:
 """
 
 import json
+
 import pytest
 
-from models import QuizQuestion, PersonalityType, HabitTemplate, UserQuizResult, Habit
 from extensions import db
-
+from models import Habit, HabitTemplate, PersonalityType, QuizQuestion, UserQuizResult
 
 # === Quiz Data Fixtures ===
 
