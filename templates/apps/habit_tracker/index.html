@@ -482,11 +482,15 @@
                         <div class="flex items-center gap-2 flex-1">
                             <form method="POST" action="/habit-tracker/toggle/{{ habit.id }}" class="inline">
                                 <button type="submit" class="text-purple-600 hover:text-purple-800 transition-colors">
-                                    {% set today = habit.completed_dates|default('[]')|from_json %}
-                                    {% if today|string in today %}
-                                        <span class="text-2xl">✓</span>
+                                    {% set completed_dates = habit.completed_dates|default('[]')|from_json %}
+                                    {% if today_str in completed_dates %}
+                                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
                                     {% else %}
-                                        <span class="text-2xl opacity-30">○</span>
+                                        <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="12" r="9" stroke-width="2"></circle>
+                                        </svg>
                                     {% endif %}
                                 </button>
                             </form>

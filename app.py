@@ -500,6 +500,30 @@ def resume_habit(habit_id):
     return redirect(request.referrer or url_for("habit_tracker"))
 
 
+@app.route("/habit-tracker/toggle/<int:habit_id>", methods=["POST"])
+def toggle_habit_completion(habit_id):
+    """Mark or unmark a habit as completed for today"""
+    if not session.get("authenticated"):
+        return redirect(url_for("signin"))
+
+    habit = db.session.get(Habit, habit_id)
+    if not habit:
+        return "Habit not found", 404
+
+    today_str = datetime.now(timezone.utc).date().isoformat()
+    completed = json.loads(habit.completed_dates or "[]")
+
+    if today_str in completed:
+        completed.remove(today_str)  # unmark as complete
+    else:
+        completed.append(today_str)  # mark as complete
+
+    habit.completed_dates = json.dumps(completed)
+    db.session.commit()
+
+    return redirect(url_for("habit_tracker"))
+
+
 @app.route("/habit-tracker/archived")
 def archived_habits():
     """View archived habits"""
