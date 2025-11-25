@@ -158,6 +158,8 @@
                 </div>
                 <div class="flex items-center gap-4">
 
+                    <!-- Pomodoro Timer (only show when authenticated AND not on signin page) -->
+                    {% if session.get('authenticated') and request.endpoint != 'signin' %}
                     <a href="{{ url_for('pomodoro_timer') }}"
                     class="flex items-center gap-2 px-4 py-2 rounded-xl
                             bg-theme-secondary hover:opacity-80 transition-colors shadow-sm border border-theme"
@@ -173,12 +175,13 @@
                             Pomodoro Timer
                         </span>
                     </a>
+                    {% endif %}
 
 
 
 
-                    <!-- Statistics Link (only show when authenticated) -->
-                    {% if session.get('authenticated') %}
+                    <!-- Statistics Link (only show when authenticated AND not on signin page) -->
+                    {% if session.get('authenticated') and request.endpoint != 'signin' %}
                     <a href="{{ url_for('habit_stats') }}"
                        class="p-2 rounded-lg bg-theme-secondary hover:opacity-80 transition-colors"
                        title="Statistics">
@@ -188,7 +191,8 @@
                     </a>
                     {% endif %}
 
-                    <!-- Notification Bell Icon -->
+                    <!-- Notification Bell Icon (only show when authenticated AND not on signin page) -->
+                    {% if session.get('authenticated') and request.endpoint != 'signin' %}
                     <button onclick="toggleNotifications()"
                             class="p-2 rounded-lg bg-theme-secondary hover:opacity-80 transition-colors relative"
                             title="Notifications"
@@ -199,6 +203,7 @@
                         <!-- Notification Count Badge -->
                         <span id="notificationCount" class="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
                     </button>
+                    {% endif %}
 
                     <button onclick="openSettings()"
                             class="p-2 rounded-lg bg-theme-secondary hover:opacity-80 transition-colors"

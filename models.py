@@ -26,6 +26,8 @@ class Habit(db.Model):
     archived_at = db.Column(db.DateTime, nullable=True)
     is_paused = db.Column(db.Boolean, default=False)
     paused_at = db.Column(db.DateTime, nullable=True)
+    is_completed = db.Column(db.Boolean, default=False)
+    completed_at = db.Column(db.DateTime, nullable=True)
 
 
 class Notification(db.Model):

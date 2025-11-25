@@ -49,6 +49,77 @@
         background: var(--bg-secondary);
     }
 
+    /* Dark mode overrides for totally-completed section */
+    [data-theme="dark"] .completed-habits-empty {
+        background: linear-gradient(to right, #86efac, #6ee7b7) !important;
+        border-color: #4ade80 !important;
+    }
+
+    [data-theme="dark"] .completed-habits-empty .text-gray-900,
+    [data-theme="dark"] .completed-habits-empty .text-gray-800,
+    [data-theme="dark"] .completed-habits-empty .text-gray-700 {
+        color: #111827 !important;
+    }
+
+    [data-theme="dark"] .completed-habits-empty .bg-green-100 {
+        background-color: #86efac !important;
+    }
+
+    /* Completed Habit Cards - Keep light background with dark text */
+    [data-theme="dark"] .completed-habit-card {
+        background: linear-gradient(to right, #d1fae5, #a7f3d0) !important;
+        border-color: #4ade80 !important;
+    }
+
+    /* Habit name in completed section - black on light green */
+    [data-theme="dark"] .completed-habit-card .habit-name {
+        color: #111827 !important;
+    }
+
+    /* Section header and count - white text on dark background */
+    [data-theme="dark"] .completed-habits-section > div > div > h3 {
+        color: #ffffff !important;
+    }
+    
+    /* Count badge - black text on light background */
+    [data-theme="dark"] .completed-habits-section .habit-count {
+        color: #111827 !important;
+        background-color: #d1fae5 !important;
+    }
+
+    /* ALL badges and text inside completed habit cards - black text */
+    [data-theme="dark"] .completed-habit-card span,
+    [data-theme="dark"] .completed-habit-card p,
+    [data-theme="dark"] .completed-habit-card .text-green-700,
+    [data-theme="dark"] .completed-habit-card .text-green-800,
+    [data-theme="dark"] .completed-habit-card .text-green-900,
+    [data-theme="dark"] .completed-habit-card .text-orange-700,
+    [data-theme="dark"] .completed-habit-card .text-orange-900,
+    [data-theme="dark"] .completed-habit-card .text-gray-500,
+    [data-theme="dark"] .completed-habit-card .text-gray-700,
+    [data-theme="dark"] .completed-habit-card .text-gray-800,
+    [data-theme="dark"] .completed-habit-card .text-gray-900 {
+        color: #111827 !important;
+    }
+
+    /* Force all badge backgrounds to be light */
+    [data-theme="dark"] .completed-habit-card .bg-green-200,
+    [data-theme="dark"] .completed-habit-card .bg-green-300 {
+        background-color: #bbf7d0 !important;
+    }
+
+    [data-theme="dark"] .completed-habit-card .bg-white {
+        background-color: #d1fae5 !important;
+    }
+
+    [data-theme="dark"] .completed-habit-card .bg-orange-100,
+    [data-theme="dark"] .completed-habit-card .bg-orange-200 {
+        background-color: #fed7aa !important;
+    }
+
+
+
+
     [data-theme="dark"] .border-gray-100 {
         border-color: var(--border-color);
     }
@@ -71,7 +142,7 @@
         color: var(--text-secondary);
     }
 
-    /* Dark mode styles for paused habits */
+    /* Dark mode styles for paused section */
     [data-theme="dark"] .text-gray-700 {
         color: var(--text-primary);
     }
@@ -592,6 +663,19 @@
                         <span class="inline-flex items-center text-xs font-medium text-green-700 bg-green-100 px-3 py-1 rounded-full">
                             0% this week
                         </span>
+                        
+                        <!-- Mark as Complete Button -->
+                        <form method="POST" action="/habit-tracker/complete/{{ habit.id }}" class="inline" id="completeForm{{ habit.id }}">
+                            <button type="button"
+                                onclick="showCompletionCelebration({{ habit.id }})"
+                                class="inline-flex items-center gap-1 text-xs font-semibold text-white bg-gradient-to-r from-green-500 to-emerald-600 px-3 py-1 rounded-full hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-sm"
+                                title="Mark as Totally Completed">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Complete
+                            </button>
+                        </form>
                     </div>
                 </div>
                 {% endfor %}
@@ -678,6 +762,102 @@
             {% endif %}
         </div>
         {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Totally Completed Habits Section -->
+{% if completed_habits %}
+<div class="completed-habits-section mt-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border-2 border-gray-100 dark:border-gray-600 p-6">
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-2">
+            <span class="text-2xl">🎉</span>
+            <h3 class="text-xl font-bold text-gray-900">Completed Habits</h3>
+            <span class="habit-count text-sm font-semibold text-gray-900 bg-gray-200 px-3 py-1 rounded-full">({{ completed_habits|length }})</span>
+        </div>
+    </div>
+
+    <div class="space-y-3">
+        {% for habit in completed_habits %}
+        <div class="completed-habit-card group p-4 rounded-lg border border-green-100 dark:border-green-700 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-100 dark:to-emerald-100 hover:border-green-200 dark:hover:border-green-600 hover:from-green-100 hover:to-emerald-100 dark:hover:from-green-200 dark:hover:to-emerald-200 transition-all duration-200">
+            <div class="flex items-start justify-between mb-2">
+                <div class="flex items-center gap-2 flex-1">
+                    <span class="text-2xl">✅</span>
+                    <span class="habit-name font-bold text-xl text-gray-900">{{ habit.name }}</span>
+                    <span class="inline-flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-800 bg-green-200 dark:bg-green-300 px-2 py-1 rounded-full">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        100% Complete
+                    </span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-gray-500 dark:text-gray-800 bg-white dark:bg-green-200 px-2 py-1 rounded-full border border-green-200 dark:border-green-400">
+                        Completed {{ habit.completed_at.strftime('%b %d, %Y') }}
+                    </span>
+
+                    <form method="POST" action="/habit-tracker/uncomplete/{{ habit.id }}" class="inline">
+                        <button type="submit"
+                            class="text-blue-400 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200 opacity-0 group-hover:opacity-100"
+                            title="Restart this habit">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                        </button>
+                    </form>
+
+                    <form method="POST" action="/habit-tracker/delete/{{ habit.id }}" class="inline">
+                        <button type="submit"
+                            class="text-red-400 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200 opacity-0 group-hover:opacity-100"
+                            onclick="return confirm('Are you sure you want to delete this completed habit?');"
+                            title="Delete habit">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% if habit.description %}
+                <p class="text-sm text-gray-700 dark:text-gray-800 ml-8 mb-3 italic border-l-2 border-green-300 dark:border-green-600 pl-3">
+                    {{ habit.description }}
+                </p>
+            {% endif %}
+            <div class="flex flex-wrap gap-2 ml-8">
+                {% if habit.category %}
+                    <span class="inline-flex items-center text-xs font-medium bg-white dark:bg-green-200 border border-green-200 dark:border-green-400 px-2 py-1 rounded-full text-gray-700 dark:text-gray-900">
+                        📁 {{ habit.category }}
+                    </span>
+                {% endif %}
+                
+                {% set completed_dates = habit.completed_dates|default('[]')|from_json %}
+                {% if completed_dates|length > 0 %}
+                    <span class="inline-flex items-center gap-1 text-xs font-medium text-orange-700 dark:text-orange-900 bg-orange-100 dark:bg-orange-200 px-2 py-1 rounded-full border border-orange-200 dark:border-orange-400">
+                        🔥 Final Streak: {{ completed_dates|length }} days
+                    </span>
+                {% endif %}
+                
+                <span class="inline-flex items-center gap-1 text-xs font-semibold text-green-700 dark:text-green-900 bg-green-100 dark:bg-green-300 px-2 py-1 rounded-full border border-green-200 dark:border-green-400">
+                    ✨ 100% Progress
+                </span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<div class="completed-habits-empty mt-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-200 dark:to-emerald-200 rounded-xl shadow-lg border-2 border-green-100 dark:border-green-400 p-8">
+    <div class="text-center">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-300 rounded-full mb-4">
+            <span class="text-4xl">🎯</span>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-3">No Completed Habits Yet</h3>
+        <p class="text-base font-bold text-gray-900 max-w-md mx-auto">
+            Complete your first habit to see it here! You've got this! <span class="text-2xl">💪</span>
+        </p>
+        <p class="text-sm font-bold text-gray-800 mt-3">
+            Keep building consistency and you'll be celebrating soon!
+        </p>
     </div>
 </div>
 {% endif %}
@@ -1104,5 +1284,133 @@ document.getElementById('shareModal').addEventListener('click', function(e) {
     </div>
   </div>
 </div>
+
+<script>
+// Celebration animation when marking habit as complete
+function showCompletionCelebration(habitId) {
+    // Create confetti/celebration overlay
+    const celebration = document.createElement('div');
+    celebration.className = 'fixed inset-0 flex items-center justify-center';
+    celebration.style.cssText = 'z-index: 99999; background-color: rgba(0, 0, 0, 0.6); pointer-events: auto;';
+    celebration.innerHTML = `
+        <div class="celebration-container" id="celebrationContainer${habitId}">
+            <button id="closeBtn${habitId}" 
+                class="absolute top-4 right-4 text-gray-600 hover:text-gray-900 transition-colors bg-white rounded-full p-2 shadow-lg z-50"
+                aria-label="Close"
+                style="cursor: pointer;">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+            <div class="celebration-text">
+                <span class="text-7xl">👏</span>
+                <span class="text-7xl">🎉</span>
+                <span class="text-7xl">👏</span>
+                <span class="text-7xl">🎊</span>
+                <span class="text-7xl">👏</span>
+            </div>
+            <div class="text-4xl font-bold text-green-600 mt-6 animate-pulse">
+                🏆 Congratulations! 🏆
+            </div>
+            <div class="text-2xl text-gray-800 mt-4 font-semibold">
+                Habit Completed! You did it! 💪
+            </div>
+            <div class="text-base text-gray-600 mt-4 font-bold">
+                ⬆️ Click the X button above to mark as complete ⬆️
+            </div>
+        </div>
+    `;
+    
+    // Add celebration styles
+    const style = document.createElement('style');
+    style.textContent = `
+        .celebration-container {
+            background: white;
+            padding: 3rem 4rem;
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            animation: celebrationPop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            border: 4px solid #10b981;
+            position: relative;
+            z-index: 100000;
+            max-width: 600px;
+        }
+        
+        .celebration-text {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            animation: continuousBounce 1s ease-in-out infinite;
+        }
+        
+        @keyframes celebrationPop {
+            0% {
+                transform: scale(0.3) rotate(-10deg);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.08) rotate(3deg);
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes continuousBounce {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+            }
+            50% {
+                transform: translateY(-20px) scale(1.15);
+            }
+        }
+    `;
+    
+    document.head.appendChild(style);
+    document.body.appendChild(celebration);
+    
+    // Add click event listener to the close button
+    const closeBtn = document.getElementById('closeBtn' + habitId);
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeAndComplete(habitId);
+        });
+    }
+    
+    // Play sound effect (clap sound)
+    try {
+        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZURE');
+        audio.volume = 0.3;
+        audio.play().catch(e => console.log('Audio play failed:', e));
+    } catch (e) {
+        console.log('Audio creation failed:', e);
+    }
+    
+    // Store celebration element for later removal
+    window.currentCelebration = { element: celebration, style: style };
+    
+    return false; // Prevent form submission
+}
+
+// Close celebration and complete the habit
+function closeAndComplete(habitId) {
+    if (window.currentCelebration) {
+        window.currentCelebration.element.style.opacity = '0';
+        window.currentCelebration.element.style.transition = 'opacity 0.5s';
+        setTimeout(() => {
+            window.currentCelebration.element.remove();
+            window.currentCelebration.style.remove();
+            window.currentCelebration = null;
+            
+            // Now submit the form to actually complete the habit
+            document.getElementById('completeForm' + habitId).submit();
+        }, 500);
+    }
+}
+</script>
 
 {% endblock %}
