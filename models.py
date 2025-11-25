@@ -54,7 +54,9 @@ class QuizQuestion(db.Model):
     option_b = db.Column(db.String(200), nullable=False)
     option_c = db.Column(db.String(200), nullable=False)
     option_d = db.Column(db.String(200), nullable=False)
-    scoring_category = db.Column(db.String(50), nullable=False)  # 'energy', 'motivation', 'structure', etc.
+    scoring_category = db.Column(
+        db.String(50), nullable=False
+    )  # 'energy', 'motivation', 'structure', etc.
 
 
 class PersonalityType(db.Model):
@@ -80,7 +82,9 @@ class HabitTemplate(db.Model):
     description = db.Column(db.Text)
     category = db.Column(db.String(60))
     priority = db.Column(db.String(10), default="Medium")
-    personality_type_id = db.Column(db.Integer, db.ForeignKey('personality_type.id'), nullable=False)
+    personality_type_id = db.Column(
+        db.Integer, db.ForeignKey("personality_type.id"), nullable=True
+    )  # NULL = general quick-add template
     reason = db.Column(db.String(200))  # Why this habit is recommended for this personality
 
 
@@ -89,7 +93,9 @@ class UserQuizResult(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, nullable=False)
-    personality_type_id = db.Column(db.Integer, db.ForeignKey('personality_type.id'), nullable=False)
+    personality_type_id = db.Column(
+        db.Integer, db.ForeignKey("personality_type.id"), nullable=False
+    )
     quiz_answers = db.Column(db.Text)  # JSON string of question_id: answer pairs
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 

@@ -318,9 +318,18 @@
 
 <div class="grid lg:grid-cols-2 gap-8">
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div class="flex items-center gap-2 mb-6">
-            <span class="text-xl">🌿</span>
-            <h3 class="text-lg font-semibold text-gray-900">Plant a New Habit</h3>
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-2">
+                <span class="text-xl">🌿</span>
+                <h3 class="text-lg font-semibold text-gray-900">Plant a New Habit</h3>
+            </div>
+            <button type="button" onclick="openTemplatesModal()"
+                    class="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-indigo-600 hover:to-purple-600 transition-all duration-200 text-sm font-medium shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+                </svg>
+                <span>Quick Add</span>
+            </button>
         </div>
         <form method="POST" action="/habit-tracker" class="space-y-4">
             <div>
@@ -1207,6 +1216,278 @@ document.getElementById('shareModal').addEventListener('click', function(e) {
   window.addEventListener('DOMContentLoaded', checkEmergencyPauseStatus);
 </script>
 
+<!-- Quick Add Templates Modal -->
+<div id="templatesModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 900px; width: 95%; max-height: 90vh; overflow-y: auto;">
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <h3 class="text-2xl font-bold text-theme-primary">Quick Add Habit Templates</h3>
+                <p class="text-sm text-theme-secondary mt-1">Choose from popular habit templates or customize before adding</p>
+            </div>
+            <button onclick="closeTemplatesModal()" class="text-theme-secondary hover:text-theme-primary">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <div id="templatesContent" class="space-y-6">
+            <div class="text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                <p class="mt-2 text-theme-secondary">Loading templates...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Customize Template Modal -->
+<div id="customizeModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-bold text-theme-primary">Customize Habit</h3>
+            <button onclick="closeCustomizeModal()" class="text-theme-secondary hover:text-theme-primary">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-theme-primary mb-2">Habit Name</label>
+                <input type="text" id="customName" class="w-full px-4 py-2 border border-theme rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-theme-primary mb-2">Description</label>
+                <textarea id="customDescription" rows="3" class="w-full px-4 py-2 border border-theme rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"></textarea>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-theme-primary mb-2">Category</label>
+                <select id="customCategory" class="w-full px-4 py-2 border border-theme rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    <option value="Health">Health</option>
+                    <option value="Fitness">Fitness</option>
+                    <option value="Study">Study</option>
+                    <option value="Productivity">Productivity</option>
+                    <option value="Mindfulness">Mindfulness</option>
+                    <option value="Finance">Finance</option>
+                    <option value="Social">Social</option>
+                    <option value="Chores">Chores</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-theme-primary mb-2">Priority</label>
+                <select id="customPriority" class="w-full px-4 py-2 border border-theme rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    <option value="High">High</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="Low">Low</option>
+                </select>
+            </div>
+            
+            <div class="flex gap-3 mt-6">
+                <button onclick="saveCustomHabit()" class="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-lg font-medium hover:from-purple-700 hover:to-indigo-700 transition-all duration-200">
+                    Add Habit
+                </button>
+                <button onclick="closeCustomizeModal()" class="px-6 py-3 border border-theme rounded-lg font-medium text-theme-primary hover:bg-theme-secondary transition-all duration-200">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentTemplateId = null;
+
+// Open templates modal and load templates
+async function openTemplatesModal() {
+    document.getElementById('templatesModal').style.display = 'flex';
+    await loadTemplates();
+}
+
+function closeTemplatesModal() {
+    document.getElementById('templatesModal').style.display = 'none';
+}
+
+// Load templates from backend
+async function loadTemplates() {
+    try {
+        const response = await fetch('/habit-tracker/templates');
+        const data = await response.json();
+        
+        const content = document.getElementById('templatesContent');
+        
+        if (data.total === 0) {
+            content.innerHTML = `
+                <div class="text-center py-8">
+                    <span class="text-4xl">🎉</span>
+                    <p class="mt-4 text-theme-primary font-semibold">You've added all available templates!</p>
+                    <p class="text-sm text-theme-secondary mt-2">Great job building your habits!</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Build HTML for categorized templates
+        let html = '';
+        const categoryIcons = {
+            'Health': '🏥',
+            'Fitness': '💪',
+            'Study': '📚',
+            'Productivity': '⚡',
+            'Mindfulness': '🧘',
+            'Finance': '💰',
+            'Social': '👥',
+            'Chores': '🧹',
+            'Other': '📌'
+        };
+        
+        for (const [category, templates] of Object.entries(data.templates)) {
+            const icon = categoryIcons[category] || '📌';
+            html += `
+                <div>
+                    <h4 class="text-lg font-semibold text-theme-primary mb-3 flex items-center gap-2">
+                        <span>${icon}</span>
+                        <span>${category}</span>
+                        <span class="text-sm text-theme-secondary font-normal">(${templates.length})</span>
+                    </h4>
+                    <div class="grid md:grid-cols-2 gap-3">
+            `;
+            
+            templates.forEach(template => {
+                const priorityColors = {
+                    'High': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+                    'Medium': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+                    'Low': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                };
+                const priorityColor = priorityColors[template.priority] || priorityColors['Medium'];
+                
+                html += `
+                    <div class="border border-theme rounded-lg p-4 bg-theme-secondary hover:shadow-md transition-all duration-200">
+                        <div class="flex justify-between items-start mb-2">
+                            <h5 class="font-semibold text-theme-primary">${template.name}</h5>
+                            <span class="text-xs px-2 py-1 rounded ${priorityColor}">${template.priority}</span>
+                        </div>
+                        <p class="text-sm text-theme-secondary mb-3">${template.description || ''}</p>
+                        <div class="flex gap-2">
+                            <button onclick="addFromTemplate(${template.id})" 
+                                    class="flex-1 bg-purple-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-all duration-200">
+                                Add
+                            </button>
+                            <button onclick="customizeTemplate(${template.id}, '${template.name.replace(/'/g, "\\'")}', '${(template.description || '').replace(/'/g, "\\'")}', '${template.category}', '${template.priority}')" 
+                                    class="px-3 py-2 border border-theme rounded-lg text-sm font-medium text-theme-primary hover:bg-theme-primary hover:text-white transition-all duration-200">
+                                Customize
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                    </div>
+                </div>
+            `;
+        }
+        
+        content.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Error loading templates:', error);
+        document.getElementById('templatesContent').innerHTML = `
+            <div class="text-center py-8 text-red-600">
+                <p>Failed to load templates. Please try again.</p>
+            </div>
+        `;
+    }
+}
+
+// Add habit directly from template
+async function addFromTemplate(templateId) {
+    try {
+        const response = await fetch('/habit-tracker/add-from-template', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({template_id: templateId})
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            closeTemplatesModal();
+            window.location.reload(); // Refresh to show new habit
+        } else {
+            alert(data.error || 'Failed to add habit');
+        }
+    } catch (error) {
+        console.error('Error adding habit:', error);
+        alert('Failed to add habit. Please try again.');
+    }
+}
+
+// Open customize modal
+function customizeTemplate(id, name, description, category, priority) {
+    currentTemplateId = id;
+    document.getElementById('customName').value = name;
+    document.getElementById('customDescription').value = description;
+    document.getElementById('customCategory').value = category;
+    document.getElementById('customPriority').value = priority;
+    
+    document.getElementById('customizeModal').style.display = 'flex';
+}
+
+function closeCustomizeModal() {
+    document.getElementById('customizeModal').style.display = 'none';
+    currentTemplateId = null;
+}
+
+// Save customized habit
+async function saveCustomHabit() {
+    const name = document.getElementById('customName').value.trim();
+    const description = document.getElementById('customDescription').value.trim();
+    const category = document.getElementById('customCategory').value;
+    const priority = document.getElementById('customPriority').value;
+    
+    if (!name) {
+        alert('Please enter a habit name');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/habit-tracker/add-from-template', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                template_id: currentTemplateId,
+                name,
+                description,
+                category,
+                priority
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            closeCustomizeModal();
+            closeTemplatesModal();
+            window.location.reload(); // Refresh to show new habit
+        } else {
+            alert(data.error || 'Failed to add habit');
+        }
+    } catch (error) {
+        console.error('Error adding habit:', error);
+        alert('Failed to add habit. Please try again.');
+    }
+}
+
+// Close modals when clicking outside
+document.getElementById('templatesModal').addEventListener('click', function(e) {
+    if (e.target === this) closeTemplatesModal();
+});
+
+document.getElementById('customizeModal').addEventListener('click', function(e) {
+    if (e.target === this) closeCustomizeModal();
+});
+</script>
 
 <!-- Emergency Pause Modal -->
 <div id="emergencyPauseModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">

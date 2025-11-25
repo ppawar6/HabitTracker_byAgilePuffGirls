@@ -127,6 +127,8 @@ def test_pomodoro_navbar_button_visible_in_base_template(authenticated_client):
 
     # Button label visible
     assert "Pomodoro Timer" in data
+
+
 def test_pomodoro_info_modal_present(authenticated_client, pomodoro_url):
     """Pomodoro page should render the info modal container."""
     response = authenticated_client.get(pomodoro_url)
