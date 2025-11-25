@@ -44,7 +44,7 @@ class TestCompletedHabitsModel:
             habit = Habit(name="Test Habit")
             db.session.add(habit)
             db.session.commit()
-            
+
             assert hasattr(habit, 'is_completed')
             assert habit.is_completed is False
 
@@ -54,7 +54,7 @@ class TestCompletedHabitsModel:
             habit = Habit(name="Test Habit")
             db.session.add(habit)
             db.session.commit()
-            
+
             assert hasattr(habit, 'completed_at')
             assert habit.completed_at is None
 
@@ -206,12 +206,12 @@ class TestCompletedHabitsDisplay:
         response = authenticated_client.get("/habit-tracker")
         assert response.status_code == 200
         content = response.data.decode()
-        
+
         # Find positions in HTML - most recent should appear first
         pos_habit3 = content.find("Habit 3")
         pos_habit2 = content.find("Habit 2")
         pos_habit1 = content.find("Habit 1")
-        
+
         assert pos_habit3 < pos_habit2 < pos_habit1
 
     def test_empty_completed_section_shows_encouragement(self, authenticated_client):
@@ -219,7 +219,7 @@ class TestCompletedHabitsDisplay:
         response = authenticated_client.get("/habit-tracker")
         assert response.status_code == 200
         content = response.data.decode().lower()
-        
+
         # Should show encouraging message when no completed habits
         assert "complete your first habit" in content or "no completed habits" in content or "you've got this" in content
 
@@ -237,7 +237,7 @@ class TestCompletedHabitsDisplay:
 
         response = authenticated_client.get("/habit-tracker")
         assert response.status_code == 200
-        
+
         # Verify completed habit is not in active section
         # This would require more sophisticated HTML parsing in real tests
 
@@ -343,10 +343,10 @@ class TestCompletedHabitsIntegration:
         response = authenticated_client.get("/habit-tracker")
         assert response.status_code == 200
         content = response.data.decode()
-        
+
         # Find section positions - paused should come before completed
         paused_section_pos = content.lower().find("paused habits")
         completed_section_pos = content.lower().find("completed habits")
-        
+
         if paused_section_pos != -1 and completed_section_pos != -1:
             assert paused_section_pos < completed_section_pos
