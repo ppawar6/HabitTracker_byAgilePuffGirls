@@ -765,6 +765,7 @@ def habit_stats():
     active_habits = len([h for h in all_habits if not h.is_archived and not h.is_paused and not h.is_completed])
     paused_habits = len([h for h in all_habits if h.is_paused and not h.is_archived])
     archived_habits = len([h for h in all_habits if h.is_archived])
+    completed_habits = len([h for h in all_habits if h.is_completed and not h.is_archived])
 
     # Calculate habits by category
     category_counts = {}
@@ -789,6 +790,7 @@ def habit_stats():
         active_habits=active_habits,
         paused_habits=paused_habits,
         archived_habits=archived_habits,
+        completed_habits=completed_habits,
         category_counts=sorted_categories,
         most_recent=most_recent,
         oldest=oldest,
