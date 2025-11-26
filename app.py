@@ -277,8 +277,8 @@ def habit_tracker():
     else:
         priority_filters = []
 
-    # Get active habits (not archived and not paused)
-    base_query = Habit.query.filter_by(is_archived=False, is_paused=False)
+    # Get active habits (not archived and not paused and not completed)
+    base_query = Habit.query.filter_by(is_archived=False, is_paused=False, is_completed=False)
 
     # Filter by one or more categories
     if category_filters:
@@ -338,6 +338,13 @@ def habit_tracker():
             .all()
         )
 
+    # Completed habits – always show them (sorted by completion date, newest first)
+    completed_habits = (
+        Habit.query.filter_by(is_archived=False, is_completed=True)
+        .order_by(Habit.completed_at.desc())
+        .all()
+    )
+
     # Build category list for filter: default CATEGORIES + any custom ones in DB
     db_categories = {
         c for (c,) in db.session.query(Habit.category).distinct() if c is not None and c.strip()
@@ -349,6 +356,7 @@ def habit_tracker():
         page_id="habit-tracker",
         habits=habits,
         paused_habits=paused_habits,
+        completed_habits=completed_habits,
         categories=CATEGORIES,
         current_sort=sort_by,
         filter_categories=filter_categories,
@@ -677,6 +685,60 @@ def resume_habit(habit_id):
     return redirect(request.referrer or url_for("habit_tracker"))
 
 
+@app.route("/habit-tracker/complete/<int:habit_id>", methods=["POST"])
+def complete_habit(habit_id):
+    """Mark a habit as totally completed"""
+    if not session.get("authenticated"):
+        return redirect(url_for("signin"))
+
+    habit = db.session.get(Habit, habit_id)
+    if not habit:
+        return "Habit not found", 404
+
+    habit.is_completed = True
+    habit.completed_at = datetime.now(timezone.utc)
+
+    # Create celebration notification
+    email = session.get("email")
+    if email:
+        create_notification(
+            user_email=email,
+            message=f"🎉 Congratulations! Habit completed: {habit.name}",
+            action_type="completed",
+            habit_name=habit.name,
+        )
+
+    db.session.commit()
+    return redirect(url_for("habit_tracker"))
+
+
+@app.route("/habit-tracker/uncomplete/<int:habit_id>", methods=["POST"])
+def uncomplete_habit(habit_id):
+    """Unmark a completed habit (reactivate it)"""
+    if not session.get("authenticated"):
+        return redirect(url_for("signin"))
+
+    habit = db.session.get(Habit, habit_id)
+    if not habit:
+        return "Habit not found", 404
+
+    habit.is_completed = False
+    habit.completed_at = None
+
+    # Create notification
+    email = session.get("email")
+    if email:
+        create_notification(
+            user_email=email,
+            message=f"Reactivated habit: {habit.name}",
+            action_type="resumed",
+            habit_name=habit.name,
+        )
+
+    db.session.commit()
+    return redirect(request.referrer or url_for("habit_tracker"))
+
+
 @app.route("/habit-tracker/archived")
 def archived_habits():
     """View archived habits"""
@@ -700,9 +762,10 @@ def habit_stats():
 
     # Calculate basic statistics
     total_habits = len(all_habits)
-    active_habits = len([h for h in all_habits if not h.is_archived and not h.is_paused])
+    active_habits = len([h for h in all_habits if not h.is_archived and not h.is_paused and not h.is_completed])
     paused_habits = len([h for h in all_habits if h.is_paused and not h.is_archived])
     archived_habits = len([h for h in all_habits if h.is_archived])
+    completed_habits = len([h for h in all_habits if h.is_completed and not h.is_archived])
 
     # Calculate habits by category
     category_counts = {}
@@ -727,6 +790,7 @@ def habit_stats():
         active_habits=active_habits,
         paused_habits=paused_habits,
         archived_habits=archived_habits,
+        completed_habits=completed_habits,
         category_counts=sorted_categories,
         most_recent=most_recent,
         oldest=oldest,
