@@ -357,6 +357,11 @@
                 <textarea id="habit-description" name="description" rows="3"
                     class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
                     placeholder="Why is this habit important to you?"></textarea>
+                <!-- 🔹 NEW: Character counter (US28) -->
+                <p id="description-char-counter"
+                   class="mt-1 text-xs text-gray-500 text-right">
+                    <span id="description-char-count" data-max-length="200">0</span> / 200 characters
+                </p>
             </div>
 
             <div>
@@ -1045,6 +1050,28 @@ document.getElementById('shareModal').addEventListener('click', function(e) {
     if (e.target === this) {
         closeShareModal();
     }
+});
+</script>
+
+<!-- 🔹 NEW: Live character counter script (US28) -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const descriptionField = document.getElementById('habit-description');
+  const counterSpan = document.getElementById('description-char-count');
+
+  if (!descriptionField || !counterSpan) return;
+
+  const maxLength = parseInt(counterSpan.getAttribute('data-max-length') || '200', 10);
+
+  function updateCount() {
+    const length = descriptionField.value.length || 0;
+    counterSpan.textContent = length.toString();
+  }
+
+  descriptionField.addEventListener('input', updateCount);
+
+  // Initialize on load in case of prefilled content
+  updateCount();
 });
 </script>
 

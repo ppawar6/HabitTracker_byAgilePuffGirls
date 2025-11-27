@@ -231,6 +231,11 @@ def habit_tracker():
         category = request.form.get("category", "").strip()
         priority = request.form.get("priority", "Medium").strip()
 
+        #hard-limit description to 200 chars for safety
+        MAX_DESC_LENGTH = 200
+        if description:
+            description = description[:MAX_DESC_LENGTH]
+
         if category == "other":
             category = request.form.get("category_custom", "").strip()
 
