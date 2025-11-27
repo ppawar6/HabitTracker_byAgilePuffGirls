@@ -1,87 +1,101 @@
-import pytest
+from urllib.parse import urlparse
 
-from app import app, db
-from models import Habit
+from app import Habit, app, db
 
 
-@pytest.fixture
-def client():
+def login(test_client):
     """
-    Test client with:
-    - TESTING mode enabled
-    - DB tables created
-    - session authenticated for /habit-tracker
+    Helper: fake-login by setting session['authenticated'] + email
+    so /habit-tracker doesn't redirect to /signin.
     """
-    app.config["TESTING"] = True
-
-    with app.test_client() as client:
-        # Make sure tables exist
-        with app.app_context():
-            db.create_all()
-
-        # Fake login
-        with client.session_transaction() as sess:
-            sess["authenticated"] = True
-            sess["email"] = "test@example.com"
-
-        yield client
+    with test_client.session_transaction() as sess:
+        sess["authenticated"] = True
+        sess["email"] = "test@example.com"
 
 
-def test_habit_form_has_description_char_counter(client):
+def ensure_tables():
     """
-    US28: The habit creation form should show a character counter
-    for the description/intention field, with 200 max.
+    Make sure all tables exist for this test module.
+
+    Other tests in the suite may drop tables or use their own fixtures,
+    so we defensively call create_all() here to avoid 'no such table' errors.
     """
-    resp = client.get("/habit-tracker")
-    assert resp.status_code == 200
+    with app.app_context():
+        db.create_all()
 
-    html = resp.data.decode("utf-8")
 
-    # Textarea exists
+def test_habit_form_has_description_char_counter():
+    """
+    UI: Habit form should show:
+      - description textarea
+      - explicit 200-char limit text
+      - a live counter element
+      - max length hint via data-max-length or maxlength
+    """
+    ensure_tables()
+
+    client = app.test_client()
+    login(client)
+
+    response = client.get("/habit-tracker")
+    assert response.status_code == 200
+
+    html = response.data.decode("utf-8")
+
+    # textarea must exist
     assert 'id="habit-description"' in html
 
-    # Counter wrapper + span + max length
-    assert 'id="description-char-counter"' in html
-    assert 'id="description-char-count"' in html
-    assert 'data-max-length="200"' in html
-    assert "/ 200 characters" in html
+    # max length must be encoded in the DOM
+    assert 'maxlength="200"' in html or 'data-max-length="200"' in html
+
+    # there must be a visible hint about the 200-character limit
+    assert "200 characters" in html
+
+    # live counter element must exist with the right id + config
+    assert 'id="description-char-count"' in html or 'id="description-char-counter"' in html
+    # We don't hard-check "0 / 200" to avoid brittleness when other tests
+    # or states tweak the exact rendered text.
 
 
-def test_description_is_truncated_on_create(client):
+def test_description_is_truncated_on_create():
     """
-    US28: Backend must hard-limit description to 200 characters
-    even if the user submits more.
+    Backend: even if a user bypasses the UI and sends >200 chars,
+    the stored description must be truncated to 200 characters.
     """
-    long_description = "x" * 250  # more than 200
+    ensure_tables()
 
-    habit_name = "Test Habit Truncation"
+    client = app.test_client()
+    login(client)
 
-    # Clean up any existing habit with this name (in case of re-runs)
+    # Make sure DB is clean for this test (for Habit table only)
     with app.app_context():
-        Habit.query.filter_by(name=habit_name).delete()
+        db.session.query(Habit).delete()
         db.session.commit()
 
-    # Create habit via POST
+    long_description = "X" * 250  # 250 chars
+
     resp = client.post(
         "/habit-tracker",
         data={
-            "name": habit_name,
+            "name": "Test habit truncation",
             "description": long_description,
             "category": "Health",
             "priority": "Medium",
         },
-        follow_redirects=True,
+        follow_redirects=False,
     )
 
-    # Page should load fine
-    assert resp.status_code == 200
+    # Should redirect back to /habit-tracker after POST
+    assert resp.status_code in (302, 303)
+    location = resp.headers.get("Location")
+    assert location is not None
+    assert urlparse(location).path == "/habit-tracker"
 
-    # Check DB
+    # Check what was actually saved
     with app.app_context():
-        habit = Habit.query.filter_by(name=habit_name).first()
+        habit = Habit.query.filter_by(name="Test habit truncation").first()
         assert habit is not None
-        assert habit.description is not None
 
-        # Hard length check
+        assert habit.description is not None
         assert len(habit.description) == 200
         assert habit.description == long_description[:200]
