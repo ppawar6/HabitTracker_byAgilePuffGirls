@@ -228,22 +228,16 @@
         to { transform: translateY(0); opacity: 1; }
     }
 
-    /* Dark mode: Override inline background colors for habit cards */
-    [data-theme="dark"] .habit-card {
-        background-color: var(--bg-primary) !important;
-        border-color: var(--border-color) !important;
-    }
-
-    /* Dark mode: Text in habit cards should be readable */
+    /* Dark mode: Keep category colors but ensure text is readable */
     [data-theme="dark"] .habit-card .text-gray-900,
     [data-theme="dark"] .habit-card .habit-name-display {
-        color: var(--text-primary) !important;
+        color: #111827 !important;
     }
 
     [data-theme="dark"] .habit-card .text-gray-700,
     [data-theme="dark"] .habit-card .text-gray-600,
     [data-theme="dark"] .habit-card .text-gray-500 {
-        color: var(--text-secondary) !important;
+        color: #374151 !important;
     }
 
     /* Dark mode: Priority badges in template modal */
@@ -598,7 +592,7 @@
                             </form>
                         </div>
                         <div class="flex items-center gap-2">
-                            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                            <span class="text-xs text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 px-2.5 py-1 rounded-full font-medium">
                                 {{ habit.created_at.strftime('%b %d') }}
                             </span>
 
