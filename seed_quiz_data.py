@@ -5,7 +5,6 @@ Run this script to populate quiz questions, personality types, and habit templat
 
 import json
 
-from app import app
 from extensions import db
 from models import HabitTemplate, PersonalityType, QuizQuestion
 
@@ -61,7 +60,9 @@ def seed_quiz_questions():
     ]
 
     for q_data in questions:
-        existing = QuizQuestion.query.filter_by(question_number=q_data["question_number"]).first()
+        existing = QuizQuestion.query.filter_by(
+            question_number=q_data["question_number"]
+        ).first()
         if not existing:
             question = QuizQuestion(**q_data)
             db.session.add(question)
@@ -76,7 +77,10 @@ def seed_personality_types():
         {
             "name": "Morning Warrior",
             "emoji": "🌅",
-            "description": "You thrive in the early hours with high energy and focus. Your peak productivity happens before most people wake up.",
+            "description": (
+                "You thrive in the early hours with high energy and focus. "
+                "Your peak productivity happens before most people wake up."
+            ),
             "peak_time": "6-9 AM",
             "energy_level": "High",
             "motivation_style": "Goal-driven",
@@ -100,7 +104,10 @@ def seed_personality_types():
         {
             "name": "Night Owl",
             "emoji": "🦉",
-            "description": "Your energy peaks in the evening. You work best when the world is quiet and distractions fade away.",
+            "description": (
+                "Your energy peaks in the evening. You work best when the world is quiet "
+                "and distractions fade away."
+            ),
             "peak_time": "8 PM - 12 AM",
             "energy_level": "High (Evening)",
             "motivation_style": "Independent",
@@ -124,7 +131,10 @@ def seed_personality_types():
         {
             "name": "Steady Achiever",
             "emoji": "📈",
-            "description": "You value consistency over intensity. Slow and steady wins your race, building habits through reliable routines.",
+            "description": (
+                "You value consistency over intensity. Slow and steady wins your race, "
+                "building habits through reliable routines."
+            ),
             "peak_time": "Consistent throughout day",
             "energy_level": "Moderate",
             "motivation_style": "Process-focused",
@@ -176,7 +186,7 @@ def seed_habit_templates():
             "description": "Start your day early to maximize morning energy",
             "category": "Health",
             "priority": "High",
-            "personality_type_id": morning_warrior.id,
+            "personality_type_id": morning_warrior.id if morning_warrior else None,
             "reason": "Matches your peak energy time",
         },
         {
@@ -184,7 +194,7 @@ def seed_habit_templates():
             "description": "Quick exercise routine to energize your day",
             "category": "Fitness",
             "priority": "High",
-            "personality_type_id": morning_warrior.id,
+            "personality_type_id": morning_warrior.id if morning_warrior else None,
             "reason": "High energy baseline supports morning exercise",
         },
         {
@@ -192,7 +202,7 @@ def seed_habit_templates():
             "description": "Review and plan daily goals each morning",
             "category": "Productivity",
             "priority": "Medium",
-            "personality_type_id": morning_warrior.id,
+            "personality_type_id": morning_warrior.id if morning_warrior else None,
             "reason": "Goal-driven style thrives on planning",
         },
         # Night Owl habits
@@ -201,7 +211,7 @@ def seed_habit_templates():
             "description": "Reflect on your day before bed",
             "category": "Personal Growth",
             "priority": "Medium",
-            "personality_type_id": night_owl.id,
+            "personality_type_id": night_owl.id if night_owl else None,
             "reason": "Evening focus perfect for reflection",
         },
         {
@@ -209,7 +219,7 @@ def seed_habit_templates():
             "description": "Read before bed to wind down",
             "category": "Learning",
             "priority": "Medium",
-            "personality_type_id": night_owl.id,
+            "personality_type_id": night_owl.id if night_owl else None,
             "reason": "Peak concentration in evening hours",
         },
         {
@@ -217,7 +227,7 @@ def seed_habit_templates():
             "description": "Gentle stretching routine before sleep",
             "category": "Health",
             "priority": "Low",
-            "personality_type_id": night_owl.id,
+            "personality_type_id": night_owl.id if night_owl else None,
             "reason": "Works with your natural evening rhythm",
         },
         # Steady Achiever habits
@@ -226,7 +236,7 @@ def seed_habit_templates():
             "description": "Stay hydrated throughout the day",
             "category": "Health",
             "priority": "Medium",
-            "personality_type_id": steady_achiever.id,
+            "personality_type_id": steady_achiever.id if steady_achiever else None,
             "reason": "Simple, consistent habit perfect for your style",
         },
         {
@@ -234,7 +244,7 @@ def seed_habit_templates():
             "description": "Take a short walk every day",
             "category": "Fitness",
             "priority": "Medium",
-            "personality_type_id": steady_achiever.id,
+            "personality_type_id": steady_achiever.id if steady_achiever else None,
             "reason": "Small, sustainable daily habit",
         },
         {
@@ -242,14 +252,15 @@ def seed_habit_templates():
             "description": "Read at least 10 pages each day",
             "category": "Learning",
             "priority": "Medium",
-            "personality_type_id": steady_achiever.id,
+            "personality_type_id": steady_achiever.id if steady_achiever else None,
             "reason": "Achievable daily goal with steady progress",
         },
     ]
 
     for t_data in templates:
         existing = HabitTemplate.query.filter_by(
-            name=t_data["name"], personality_type_id=t_data["personality_type_id"]
+            name=t_data["name"],
+            personality_type_id=t_data["personality_type_id"],
         ).first()
         if not existing:
             template = HabitTemplate(**t_data)
@@ -257,21 +268,3 @@ def seed_habit_templates():
 
     db.session.commit()
     print("Habit templates seeded successfully!")
-
-
-if __name__ == "__main__":
-    with app.app_context():
-        print("Starting database seeding...")
-
-        # Create tables if they don't exist
-        db.create_all()
-
-        # Seed data
-        seed_quiz_questions()
-        seed_personality_types()
-        seed_habit_templates()
-
-        print("\nDatabase seeding complete!")
-        print(f"   - {QuizQuestion.query.count()} quiz questions")
-        print(f"   - {PersonalityType.query.count()} personality types")
-        print(f"   - {HabitTemplate.query.count()} habit templates")
