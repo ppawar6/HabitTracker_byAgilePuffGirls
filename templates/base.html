@@ -143,10 +143,45 @@
         input:checked + .toggle-slider:before {
             transform: translateX(26px);
         }
+                /* Offline banner theming */
+        #offlineBanner {
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+
+        [data-theme="dark"] #offlineBanner {
+            background-color: #b91c1c;
+            color: #fef2f2;
+        }
+
+        [data-theme="dark"] #offlineBanner button {
+            background-color: #fef2f2;
+            color: #b91c1c;
+        }
+
     </style>
     {% block extra_head %}{% endblock %}
 </head>
 <body class="min-h-screen bg-theme-primary flex flex-col transition-colors duration-200">
+    <div id="offlineBanner"
+         class="hidden fixed top-0 left-0 right-0 bg-red-500 text-white py-3 px-4 shadow-lg"
+         style="z-index: 9999;">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">⚠️</span>
+                <div>
+                    <p class="font-semibold">You’re offline</p>
+                    <p class="text-sm text-red-100">
+                        Please check your internet connection to sync your latest changes.
+                    </p>
+                </div>
+            </div>
+            <button type="button"
+                    onclick="dismissOfflineBanner()"
+                    class="text-xs sm:text-sm font-medium bg-white text-red-600 px-3 py-1.5 rounded-lg hover:bg-red-50">
+                Dismiss
+            </button>
+        </div>
+    </div>
     <nav class="bg-theme-primary backdrop-blur-md shadow-sm border-b border-theme sticky top-0 z-50 transition-colors duration-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
@@ -705,6 +740,46 @@
         // Keep theme in sync across tabs
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) loadThemePreference();
+        });
+
+        // Keep theme in sync across tabs
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) loadThemePreference();
+        });
+
+        // ===== Offline / Online banner =====
+        const offlineBanner = document.getElementById('offlineBanner');
+
+        function showOfflineBanner() {
+            if (!offlineBanner) return;
+            offlineBanner.classList.remove('hidden');
+            document.body.style.paddingTop = '60px';
+        }
+
+        function hideOfflineBanner() {
+            if (!offlineBanner) return;
+            offlineBanner.classList.add('hidden');
+            document.body.style.paddingTop = '0px';
+        }
+
+        function dismissOfflineBanner() {
+            hideOfflineBanner();
+        }
+
+        window.addEventListener('offline', () => {
+            console.log('[OFFLINE] Browser lost connection');
+            showOfflineBanner();
+        });
+
+        window.addEventListener('online', () => {
+            console.log('[ONLINE] Connection restored');
+            hideOfflineBanner();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!navigator.onLine) {
+                showOfflineBanner();
+            }
         });
 
                 // Clear certain localStorage keys on logout
