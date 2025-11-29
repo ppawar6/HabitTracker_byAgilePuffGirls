@@ -5,6 +5,7 @@ from extensions import db
 from models import Habit
 
 ROUTES = [
+    "/toggle/{id}",  
     "/toggle-completion/{id}",
     "/toggle_completion/{id}",
     "/habit-tracker/toggle-completion/{id}",
