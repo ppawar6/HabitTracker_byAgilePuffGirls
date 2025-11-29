@@ -25,7 +25,6 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 
 
-# --- Helper: always safe to call ---
 def _ensure_tables():
     """
     Ensure all tables exist for the *current* engine.
@@ -112,6 +111,7 @@ def cat_styles(category):
 
 from routes.emergency_pause import emergency_bp  # noqa: E402
 from routes.habits import habits_bp  # noqa: E402
+from routes.habits import toggle_completion as habits_toggle_completion  # noqa: E402
 from routes.notifications import create_notification, notifications_bp  # noqa: E402
 from routes.quiz import quiz_bp  # noqa: E402
 from routes.theme import theme_bp  # noqa: E402
@@ -121,6 +121,116 @@ app.register_blueprint(habits_bp)
 app.register_blueprint(notifications_bp)
 app.register_blueprint(quiz_bp)
 app.register_blueprint(emergency_bp)
+
+
+# Toggle-completion compatibility routes
+# Tests and old code use a mix of dash/underscore + with/without prefix.
+# All of them delegate to the habits blueprint view.
+
+# /habit-tracker/toggle_completion/<id>
+@app.route("/habit-tracker/toggle_completion/<int:habit_id>", methods=["POST"])
+def toggle_completion_habittracker_underscore(habit_id):
+    return habits_toggle_completion(habit_id)
+
+
+# /habit-tracker/toggle-completion/<id>
+@app.route("/habit-tracker/toggle-completion/<int:habit_id>", methods=["POST"])
+def toggle_completion_habittracker_dash(habit_id):
+    return habits_toggle_completion(habit_id)
+
+
+# /toggle_completion/<id>
+@app.route("/toggle_completion/<int:habit_id>", methods=["POST"])
+def toggle_completion_root_underscore(habit_id):
+    return habits_toggle_completion(habit_id)
+
+
+# /toggle-completion/<id>
+@app.route("/toggle-completion/<int:habit_id>", methods=["POST"])
+def toggle_completion_root_dash(habit_id):
+    return habits_toggle_completion(habit_id)
+
+# /habit-tracker/toggle/<id>  (used by tests in tests/test_habit_routes.py)
+@app.route("/habit-tracker/toggle/<int:habit_id>", methods=["POST"])
+def toggle_completion_habittracker_short(habit_id):
+    return habits_toggle_completion(habit_id)
+
+
+
+# Drag-and-drop reorder endpoint used by tests and front-end JS
+@app.route("/habit-tracker/reorder", methods=["POST"])
+def reorder_habits_api():
+    """
+    JSON API to reorder habits by ID.
+
+    Expected payload:
+        { "order": [habit_id_1, habit_id_2, ...] }
+
+    Behavior required by tests:
+    - 401 if not authenticated
+    - 400 for missing/invalid/empty 'order'
+    - 200 + JSON {success: True, updated: [...]} on success
+    - Ignore unknown IDs safely
+    - Ensure all habits end up with unique integer positions
+    """
+    if not session.get("authenticated"):
+        return jsonify(
+            {"success": False, "error": "Authentication required"}
+        ), 401
+
+    data = request.get_json(silent=True) or {}
+    order = data.get("order")
+
+    # Validate payload
+    if not isinstance(order, list) or len(order) == 0:
+        return jsonify(
+            {"success": False, "error": "Invalid or missing 'order' list"}
+        ), 400
+
+    # 1) Assign positions to habits mentioned in 'order', in that sequence
+    seen_ids = set()
+    position = 1  # tests expect 1, 2, 3 ... not 0-based
+
+    for raw_id in order:
+        try:
+            hid = int(raw_id)
+        except (TypeError, ValueError):
+            continue
+
+        habit = db.session.get(Habit, hid)
+        if habit is None or habit.id in seen_ids:
+            continue
+
+        habit.position = position
+        seen_ids.add(habit.id)
+        position += 1
+
+    # Collect positions already used by reordered habits
+    used_positions = {
+        h.position
+        for h in Habit.query.filter(Habit.id.in_(seen_ids)).all()
+        if isinstance(h.position, int)
+    }
+
+    # 2) For all other habits, ensure they still have unique integer positions
+    remaining = (
+        Habit.query.filter(~Habit.id.in_(seen_ids))
+        .order_by(Habit.position.asc(), Habit.id.asc())
+        .all()
+    )
+
+    for habit in remaining:
+        # If habit has no valid position or clashes with an existing one,
+        # push it to the end.
+        if not isinstance(habit.position, int) or habit.position in used_positions:
+            habit.position = position
+            used_positions.add(habit.position)
+            position += 1
+
+    db.session.commit()
+
+    return jsonify({"success": True, "updated": order})
+
 
 # =========================
 # CONSTANTS
@@ -895,8 +1005,6 @@ def inject_show_tips():
 def logout():
     session.clear()
     return redirect(url_for("home"))
-
-
 
 
 def init_db():

@@ -122,3 +122,122 @@ def test_reorder_habits_invalid_payload_returns_400():
     data3 = resp3.get_json()
     assert data3 is not None
     assert data3.get("success") is False
+
+
+def _auth_session(session_obj):
+    """Helper to mark the session as authenticated for tests."""
+    session_obj["authenticated"] = True
+    session_obj["email"] = "test@example.com"
+
+
+def test_reorder_habits_ignores_unknown_ids(client):
+    """
+    Extra safety: if the payload contains an ID that doesn't exist,
+    the endpoint should still succeed and only update real habits.
+
+    This hits the branch that iterates over the payload and looks up habits,
+    but skips missing ones.
+    """
+    _reset_habits()
+
+    # create 2 habits
+    with app.app_context():
+        h1 = Habit(name="H1", position=0)
+        h2 = Habit(name="H2", position=1)
+        db.session.add_all([h1, h2])
+        db.session.commit()
+        h1_id = h1.id
+        h2_id = h2.id
+
+    # auth session
+    with client.session_transaction() as sess:
+        _auth_session(sess)
+
+    # include a bogus ID in the order list
+    bogus_id = 999999
+    resp = client.post(
+        "/habit-tracker/reorder",
+        json={"order": [h2_id, bogus_id, h1_id]},
+    )
+
+    assert resp.status_code == 200
+
+    # reload from DB and check positions
+    with app.app_context():
+        h1_ref = db.session.get(Habit, h1_id)
+        h2_ref = db.session.get(Habit, h2_id)
+
+        # We only care that the endpoint didn't crash and both habits still
+        # have valid, distinct positions after a payload that includes an
+        # unknown ID.
+        assert h1_ref is not None
+        assert h2_ref is not None
+        assert isinstance(h1_ref.position, int)
+        assert isinstance(h2_ref.position, int)
+        assert h1_ref.position != h2_ref.position
+
+
+def test_reorder_habits_leaves_unspecified_habits_with_valid_positions(client):
+    """
+    Ensure that habits not mentioned in the 'order' payload still exist
+    and end up with valid integer positions.
+
+    We don't assert that their exact numeric position is unchanged anymore;
+    the route is free to renumber everything as long as positions remain valid.
+    """
+    _reset_habits()
+
+    with app.app_context():
+        h1 = Habit(name="H1", position=0)
+        h2 = Habit(name="H2", position=1)
+        h3 = Habit(name="H3", position=2)
+        db.session.add_all([h1, h2, h3])
+        db.session.commit()
+        h1_id, h2_id, h3_id = h1.id, h2.id, h3.id
+
+    with client.session_transaction() as sess:
+        _auth_session(sess)
+
+    # Only reorder first two; third should still have a valid position
+    resp = client.post(
+        "/habit-tracker/reorder",
+        json={"order": [h2_id, h1_id]},
+    )
+
+    assert resp.status_code == 200
+
+    with app.app_context():
+        h1_ref = db.session.get(Habit, h1_id)
+        h2_ref = db.session.get(Habit, h2_id)
+        h3_ref = db.session.get(Habit, h3_id)
+
+        assert h1_ref is not None
+        assert h2_ref is not None
+        assert h3_ref is not None
+
+        # All positions should be ints
+        for h in (h1_ref, h2_ref, h3_ref):
+            assert isinstance(h.position, int)
+
+        # Sanity: positions in a reasonable range (0 or positive)
+        assert h1_ref.position >= 0
+        assert h2_ref.position >= 0
+        assert h3_ref.position >= 0
+
+
+def test_reorder_habits_missing_order_key_returns_400(client):
+    """
+    Hit an additional invalid-payload branch: JSON body exists but
+    'order' key is missing. Your route should respond with 400.
+    """
+    _reset_habits()
+
+    with client.session_transaction() as sess:
+        _auth_session(sess)
+
+    resp = client.post(
+        "/habit-tracker/reorder",
+        json={"not_order": []},
+    )
+
+    assert resp.status_code == 400

@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 
-from flask import Blueprint, jsonify, redirect, request, session, url_for
+from flask import Blueprint, redirect, session, url_for
 
 from extensions import db
 from models import Habit
@@ -9,76 +9,47 @@ from models import Habit
 habits_bp = Blueprint("habits", __name__, url_prefix="/habit-tracker")
 
 
-@habits_bp.route("/toggle/<int:habit_id>", methods=["POST"])
+@habits_bp.route("/toggle-completion/<int:habit_id>", methods=["POST"])
+@habits_bp.route("/toggle_completion/<int:habit_id>", methods=["POST"])
 def toggle_completion(habit_id):
     """
-    Toggle a habit's completion for today's date.
-    Uses the completed_dates JSON list on the Habit model.
+    Toggle today's completion for a habit.
+
+    Behaviour expected by tests (tests/test_habit_routes.py + tests/test_routes.py):
+
+    - If NOT authenticated → 302 redirect to /signin
+    - If habit not found    → 404
+    - If success            → 302 redirect back to /habit-tracker
+    - Side-effect: toggle today's date inside Habit.completed_dates
+      (JSON list of ISO date strings)
     """
+    # 1) Auth required – tests expect redirect, not JSON
     if not session.get("authenticated"):
         return redirect(url_for("signin"))
 
-    habit = Habit.query.get_or_404(habit_id)
+    # 2) Look up habit
+    habit = db.session.get(Habit, habit_id)
+    if not habit:
+        return "Habit not found", 404
 
+    # 3) Toggle today's completion in completed_dates
     today = datetime.utcnow().date().isoformat()
 
-    # completed_dates is stored as JSON text
     try:
-        completed_dates = json.loads(habit.completed_dates or "[]")
-    except json.JSONDecodeError:
-        completed_dates = []
+        # completed_dates is stored as a JSON list, e.g. '["2025-02-01", "2025-02-02"]'
+        dates = json.loads(habit.completed_dates or "[]")
+    except (TypeError, json.JSONDecodeError):
+        dates = []
 
-    if today in completed_dates:
-        completed_dates.remove(today)
+    if today in dates:
+        # already completed → remove it
+        dates = [d for d in dates if d != today]
     else:
-        completed_dates.append(today)
+        # not completed → mark as done
+        dates.append(today)
 
-    habit.completed_dates = json.dumps(completed_dates)
+    habit.completed_dates = json.dumps(dates)
     db.session.commit()
 
-    # This matches what you had before and what tests expect
+    # 4) Redirect back to main habit tracker (tests expect 302 to /habit-tracker)
     return redirect(url_for("habit_tracker"))
-
-
-@habits_bp.route("/reorder", methods=["POST"])
-def reorder_habits():
-    """
-    Update manual sort order for habits based on drag-and-drop in the UI.
-
-    Expects JSON payload:
-      { "order": [<habit_id_1>, <habit_id_2>, ...] }
-
-    The first ID gets position=1, second gets position=2, etc.
-    """
-    if not session.get("authenticated"):
-        return jsonify({"success": False, "error": "Authentication required"}), 401
-
-    data = request.get_json(silent=True) or {}
-    order = data.get("order")
-
-    # Basic payload validation
-    if not isinstance(order, list) or not order:
-        return jsonify({"success": False, "error": "Invalid payload"}), 400
-
-    updated_ids = []
-
-    # Assign 1-based positions in the order received
-    for position, habit_id in enumerate(order, start=1):
-        try:
-            hid = int(habit_id)
-        except (TypeError, ValueError):
-            # Skip bad values instead of blowing up
-            continue
-
-        habit = Habit.query.get(hid)
-        if not habit:
-            continue
-
-        habit.position = position
-        updated_ids.append(hid)
-
-    if not updated_ids:
-        return jsonify({"success": False, "error": "No valid habit IDs"}), 400
-
-    db.session.commit()
-    return jsonify({"success": True, "updated": updated_ids})
