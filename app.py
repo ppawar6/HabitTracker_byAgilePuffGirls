@@ -111,7 +111,6 @@ def cat_styles(category):
 
 from routes.emergency_pause import emergency_bp  # noqa: E402
 from routes.habits import habits_bp  # noqa: E402
-from routes.habits import toggle_completion as habits_toggle_completion  # noqa: E402
 from routes.notifications import create_notification, notifications_bp  # noqa: E402
 from routes.quiz import quiz_bp  # noqa: E402
 from routes.theme import theme_bp  # noqa: E402
@@ -123,39 +122,83 @@ app.register_blueprint(quiz_bp)
 app.register_blueprint(emergency_bp)
 
 
-# Toggle-completion compatibility routes
-# Tests and old code use a mix of dash/underscore + with/without prefix.
-# All of them delegate to the habits blueprint view.
 
-# /habit-tracker/toggle_completion/<id>
-@app.route("/habit-tracker/toggle_completion/<int:habit_id>", methods=["POST"])
-def toggle_completion_habittracker_underscore(habit_id):
-    return habits_toggle_completion(habit_id)
+# TOGGLE ALIAS HELPER
 
+
+def _mark_completed_today(habit_id):
+    """
+    Helper used by legacy/alias toggle routes.
+
+    Behaviour:
+    - If not authenticated → redirect to /signin
+    - If habit not found → 404
+    - Ensure today's date is present in habit.completed_dates (JSON list)
+      (idempotent: calling twice keeps it completed, doesn't remove)
+    - Redirect to /habit-tracker
+    """
+    if not session.get("authenticated"):
+        return redirect(url_for("signin"))
+
+    habit = db.session.get(Habit, habit_id)
+    if not habit:
+        return "Habit not found", 404
+
+    today = datetime.utcnow().date().isoformat()
+
+    try:
+        completed_dates = json.loads(habit.completed_dates or "[]")
+    except (TypeError, json.JSONDecodeError):
+        completed_dates = []
+
+    if not isinstance(completed_dates, list):
+        completed_dates = []
+
+    if today not in completed_dates:
+        completed_dates.append(today)
+        habit.completed_dates = json.dumps(completed_dates)
+        db.session.commit()
+
+    return redirect(url_for("habit_tracker"))
+
+
+# TOGGLE-COMPLETION COMPAT ROUTES
+# These are legacy aliases that should all behave like "mark completed".
+# Canonical toggle route is defined in routes/habits.py:
+#   /habit-tracker/toggle/<id>
 
 # /habit-tracker/toggle-completion/<id>
 @app.route("/habit-tracker/toggle-completion/<int:habit_id>", methods=["POST"])
 def toggle_completion_habittracker_dash(habit_id):
-    return habits_toggle_completion(habit_id)
+    return _mark_completed_today(habit_id)
 
 
-# /toggle_completion/<id>
-@app.route("/toggle_completion/<int:habit_id>", methods=["POST"])
-def toggle_completion_root_underscore(habit_id):
-    return habits_toggle_completion(habit_id)
+# /habit-tracker/toggle_completion/<id>
+@app.route("/habit-tracker/toggle_completion/<int:habit_id>", methods=["POST"])
+def toggle_completion_habittracker_underscore(habit_id):
+    return _mark_completed_today(habit_id)
+
+
+# /toggle/<id>  (root-level alias)
+@app.route("/toggle/<int:habit_id>", methods=["POST"])
+def toggle_completion_root_plain(habit_id):
+    return _mark_completed_today(habit_id)
 
 
 # /toggle-completion/<id>
 @app.route("/toggle-completion/<int:habit_id>", methods=["POST"])
 def toggle_completion_root_dash(habit_id):
-    return habits_toggle_completion(habit_id)
-
-# /habit-tracker/toggle/<id>  (used by tests in tests/test_habit_routes.py)
-@app.route("/habit-tracker/toggle/<int:habit_id>", methods=["POST"])
-def toggle_completion_habittracker_short(habit_id):
-    return habits_toggle_completion(habit_id)
+    return _mark_completed_today(habit_id)
 
 
+# /toggle_completion/<id>
+@app.route("/toggle_completion/<int:habit_id>", methods=["POST"])
+def toggle_completion_root_underscore(habit_id):
+    return _mark_completed_today(habit_id)
+
+
+
+# REORDER API
 
 # Drag-and-drop reorder endpoint used by tests and front-end JS
 @app.route("/habit-tracker/reorder", methods=["POST"])
