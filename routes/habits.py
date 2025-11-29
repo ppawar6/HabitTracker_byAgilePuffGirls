@@ -1,6 +1,6 @@
 # routes/habits.py
-from datetime import datetime
 import json
+from datetime import datetime
 
 from flask import Blueprint, redirect, session, url_for
 
