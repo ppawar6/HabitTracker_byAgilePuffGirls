@@ -5,7 +5,7 @@ from extensions import db
 from models import Habit
 
 ROUTES = [
-    "/toggle/{id}",  
+    "/toggle/{id}",
     "/toggle-completion/{id}",
     "/toggle_completion/{id}",
     "/habit-tracker/toggle-completion/{id}",
@@ -69,7 +69,7 @@ def test_toggle_aliases_unauthenticated(client, app):
         db.session.add(habit)
         db.session.commit()
         hid = habit.id
-    
+
     # Try all routes without logging in
     for route in ROUTES:
         resp = client.post(route.format(id=hid))
@@ -119,7 +119,7 @@ def test_toggle_aliases_all_redirect_and_mark_completed(logged_in_client, app):
 def test_toggle_aliases_idempotent_already_completed(logged_in_client, app):
     """Test that calling toggle alias on already-completed habit is idempotent (keeps it completed)."""
     today = datetime.utcnow().date().isoformat()
-    
+
     with app.app_context():
         habit = Habit(
             name="Already Completed",
@@ -133,7 +133,7 @@ def test_toggle_aliases_idempotent_already_completed(logged_in_client, app):
     for route in ROUTES:
         resp = logged_in_client.post(route.format(id=hid), follow_redirects=False)
         assert resp.status_code == 302
-        
+
         with app.app_context():
             updated = db.session.get(Habit, hid)
             dates = json.loads(updated.completed_dates)
@@ -154,11 +154,11 @@ def test_toggle_aliases_marks_new_completion(logged_in_client, app):
         hid = habit.id
 
     today = datetime.utcnow().date().isoformat()
-    
+
     # Mark it completed - test just one route to ensure commit happens
     resp = logged_in_client.post(f"/toggle-completion/{hid}", follow_redirects=False)
     assert resp.status_code == 302
-    
+
     with app.app_context():
         updated = db.session.get(Habit, hid)
         dates = json.loads(updated.completed_dates)
@@ -179,7 +179,7 @@ def test_toggle_aliases_empty_string_completed_dates(logged_in_client, app):
 
     resp = logged_in_client.post(f"/toggle-completion/{hid}")
     assert resp.status_code == 302
-    
+
     with app.app_context():
         updated = db.session.get(Habit, hid)
         dates = json.loads(updated.completed_dates or "[]")
@@ -200,7 +200,7 @@ def test_toggle_aliases_type_error_in_json_parse(logged_in_client, app):
 
     resp = logged_in_client.post(f"/toggle-completion/{hid}")
     assert resp.status_code == 302
-    
+
     with app.app_context():
         updated = db.session.get(Habit, hid)
         dates = json.loads(updated.completed_dates)
@@ -232,14 +232,14 @@ def test_toggle_aliases_database_persistence(logged_in_client, app):
         dates = json.loads(fresh_habit.completed_dates)
         today = datetime.utcnow().date().isoformat()
         assert today in dates
-        
+
         # Mark it again to test the idempotent path commits too
         current_count = len(dates)
-        
+
     # Call again (should be idempotent - no new date added)
     resp2 = logged_in_client.post(f"/toggle-completion/{hid}")
     assert resp2.status_code == 302
-    
+
     with app.app_context():
         db.session.expire_all()
         final_habit = db.session.query(Habit).filter_by(id=hid).first()

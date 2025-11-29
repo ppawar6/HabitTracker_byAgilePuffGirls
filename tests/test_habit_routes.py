@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+
 from extensions import db
 from models import Habit
 
@@ -68,7 +69,7 @@ def test_toggle_completion_handles_none_completed_dates(logged_in_client, app):
 
     resp = logged_in_client.post(f"/habit-tracker/toggle/{hid}")
     assert resp.status_code == 302
-    
+
     with app.app_context():
         updated = db.session.get(Habit, hid)
         dates = json.loads(updated.completed_dates)
@@ -83,7 +84,7 @@ def test_toggle_completion_unauthenticated(client, app):
         db.session.add(habit)
         db.session.commit()
         hid = habit.id
-    
+
     resp = client.post(f"/habit-tracker/toggle/{hid}")
     assert resp.status_code == 302
     assert "/signin" in resp.location
@@ -108,7 +109,7 @@ def test_canonical_toggle_with_empty_string(logged_in_client, app):
 
     resp = logged_in_client.post(f"/habit-tracker/toggle/{hid}")
     assert resp.status_code == 302
-    
+
     with app.app_context():
         updated = db.session.get(Habit, hid)
         dates = json.loads(updated.completed_dates or "[]")
@@ -129,10 +130,47 @@ def test_canonical_toggle_type_error(logged_in_client, app):
 
     resp = logged_in_client.post(f"/habit-tracker/toggle/{hid}")
     assert resp.status_code == 302
-    
+
     with app.app_context():
         updated = db.session.get(Habit, hid)
         dates = json.loads(updated.completed_dates)
         today = datetime.utcnow().date().isoformat()
         assert isinstance(dates, list)
         assert today in dates
+
+
+def test_reorder_habits_handles_invalid_habit_ids(logged_in_client, app):
+    """Test that reorder gracefully handles invalid IDs (covers lines 240-241)."""
+    with app.app_context():
+        h1 = Habit(name="Habit 1", position=1)
+        h2 = Habit(name="Habit 2", position=2)
+        db.session.add_all([h1, h2])
+        db.session.commit()
+        id1, id2 = h1.id, h2.id
+
+    # Send order with invalid IDs mixed in - this covers the except (TypeError, ValueError): continue
+    invalid_order = [
+        id1,
+        "not-a-number",  # Triggers ValueError
+        None,            # Triggers TypeError
+        id2,
+        99999,           # Non-existent ID
+        {"bad": "data"}  # Triggers TypeError
+    ]
+
+    resp = logged_in_client.post(
+        "/habit-tracker/reorder",
+        json={"order": invalid_order}
+    )
+
+    # Should succeed and just skip the invalid IDs
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["success"] is True
+
+    # Verify only valid IDs were updated
+    with app.app_context():
+        h1_updated = db.session.get(Habit, id1)
+        h2_updated = db.session.get(Habit, id2)
+        assert h1_updated.position == 1
+        assert h2_updated.position == 2
