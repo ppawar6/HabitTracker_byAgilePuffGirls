@@ -206,3 +206,43 @@ def test_toggle_aliases_type_error_in_json_parse(logged_in_client, app):
         today = datetime.utcnow().date().isoformat()
         assert isinstance(dates, list)
         assert today in dates
+
+
+def test_toggle_aliases_database_persistence(logged_in_client, app):
+    """Verify that changes actually persist to database across sessions."""
+    with app.app_context():
+        habit = Habit(
+            name="Persistence Test",
+            completed_dates="[]"
+        )
+        db.session.add(habit)
+        db.session.commit()
+        hid = habit.id
+
+    # Mark completed
+    resp = logged_in_client.post(f"/toggle-completion/{hid}")
+    assert resp.status_code == 302
+
+    # Start a completely fresh database session
+    with app.app_context():
+        # Force a fresh query from DB, not from session cache
+        db.session.expire_all()
+        fresh_habit = db.session.query(Habit).filter_by(id=hid).first()
+        dates = json.loads(fresh_habit.completed_dates)
+        today = datetime.utcnow().date().isoformat()
+        assert today in dates
+        
+        # Mark it again to test the idempotent path commits too
+        current_count = len(dates)
+        
+    # Call again (should be idempotent - no new date added)
+    resp2 = logged_in_client.post(f"/toggle-completion/{hid}")
+    assert resp2.status_code == 302
+    
+    with app.app_context():
+        db.session.expire_all()
+        final_habit = db.session.query(Habit).filter_by(id=hid).first()
+        final_dates = json.loads(final_habit.completed_dates)
+        # Should still have the same count (idempotent)
+        assert len(final_dates) == current_count
+        assert today in final_dates
