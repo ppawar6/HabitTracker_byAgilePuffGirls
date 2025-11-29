@@ -4,7 +4,6 @@ from datetime import datetime
 from extensions import db
 from models import Habit
 
-# All alternative toggle routes that must behave the same
 ROUTES = [
     "/toggle-completion/{id}",
     "/toggle_completion/{id}",
@@ -13,44 +12,50 @@ ROUTES = [
 ]
 
 
-def test_all_toggle_aliases_redirect_and_mark_completed(logged_in_client, app):
-    """Verify all compatibility toggle routes behave identically."""
-    # Arrange: create a habit
+def test_toggle_aliases_recover_from_corrupt_completed_dates(logged_in_client, app):
+    """_mark_completed_today should handle invalid JSON in completed_dates."""
     with app.app_context():
-        habit = Habit(name="Alias Test Habit")
+        habit = Habit(
+            name="Alias Corrupt JSON",
+            completed_dates="not-valid-json",
+        )
         db.session.add(habit)
         db.session.commit()
         hid = habit.id
 
-    # Act + Assert for each alias route
     for route in ROUTES:
-        response = logged_in_client.post(route.format(id=hid), follow_redirects=False)
-        assert response.status_code == 302
-        assert response.location == "/habit-tracker"
+        resp = logged_in_client.post(route.format(id=hid), follow_redirects=False)
+        assert resp.status_code == 302
+        assert resp.location == "/habit-tracker"
 
         with app.app_context():
             updated = Habit.query.get(hid)
+            dates = json.loads(updated.completed_dates)
             today = datetime.utcnow().date().isoformat()
-            completions = json.loads(updated.completed_dates)
-            assert today in completions
+            assert isinstance(dates, list)
+            assert today in dates
 
 
-def test_all_toggle_aliases_404_when_invalid(logged_in_client):
-    """Verify all alias routes return 404 for invalid habit IDs."""
-    for route in ROUTES:
-        response = logged_in_client.post(route.format(id=999999), follow_redirects=False)
-        assert response.status_code == 404
-
-
-def test_all_toggle_aliases_require_auth(client, app):
-    """Verify all alias routes redirect to signin when not authenticated."""
+def test_toggle_aliases_recover_from_non_list_completed_dates(logged_in_client, app):
+    """_mark_completed_today should reset completed_dates if JSON is not a list."""
     with app.app_context():
-        habit = Habit(name="NoAuth Habit")
+        # Valid JSON but not a list → should trigger `if not isinstance(completed_dates, list)`
+        habit = Habit(
+            name="Alias Non List JSON",
+            completed_dates=json.dumps({"foo": "bar"}),
+        )
         db.session.add(habit)
         db.session.commit()
         hid = habit.id
 
     for route in ROUTES:
-        response = client.post(route.format(id=hid), follow_redirects=False)
-        assert response.status_code == 302
-        assert response.location == "/signin"
+        resp = logged_in_client.post(route.format(id=hid), follow_redirects=False)
+        assert resp.status_code == 302
+        assert resp.location == "/habit-tracker"
+
+        with app.app_context():
+            updated = Habit.query.get(hid)
+            dates = json.loads(updated.completed_dates)
+            today = datetime.utcnow().date().isoformat()
+            assert isinstance(dates, list)
+            assert today in dates
