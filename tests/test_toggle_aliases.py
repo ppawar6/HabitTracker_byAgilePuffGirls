@@ -29,7 +29,7 @@ def test_toggle_aliases_recover_from_corrupt_completed_dates(logged_in_client, a
         assert resp.location == "/habit-tracker"
 
         with app.app_context():
-            updated = Habit.query.get(hid)
+            updated = db.session.get(Habit, hid)
             dates = json.loads(updated.completed_dates)
             today = datetime.utcnow().date().isoformat()
             assert isinstance(dates, list)
@@ -54,8 +54,88 @@ def test_toggle_aliases_recover_from_non_list_completed_dates(logged_in_client, 
         assert resp.location == "/habit-tracker"
 
         with app.app_context():
-            updated = Habit.query.get(hid)
+            updated = db.session.get(Habit, hid)
             dates = json.loads(updated.completed_dates)
             today = datetime.utcnow().date().isoformat()
             assert isinstance(dates, list)
             assert today in dates
+
+
+def test_toggle_aliases_unauthenticated(client, app):
+    """Test that unauthenticated users are redirected to signin for all alias routes."""
+    with app.app_context():
+        habit = Habit(name="Test Habit")
+        db.session.add(habit)
+        db.session.commit()
+        hid = habit.id
+    
+    # Try all routes without logging in
+    for route in ROUTES:
+        resp = client.post(route.format(id=hid))
+        assert resp.status_code == 302
+        assert "/signin" in resp.location
+
+
+def test_toggle_aliases_habit_not_found(logged_in_client):
+    """Test that non-existent habit returns 404 for all alias routes."""
+    for route in ROUTES:
+        resp = logged_in_client.post(route.format(id=99999))
+        assert resp.status_code == 404
+
+
+def test_toggle_aliases_all_redirect_and_mark_completed(logged_in_client, app):
+    """Test that all toggle alias routes properly mark habit as completed."""
+    with app.app_context():
+        habit = Habit(
+            name="Test All Aliases",
+            completed_dates="[]"
+        )
+        db.session.add(habit)
+        db.session.commit()
+        hid = habit.id
+
+    today = datetime.utcnow().date().isoformat()
+
+    for route in ROUTES:
+        # Reset completed_dates before each test
+        with app.app_context():
+            h = db.session.get(Habit, hid)
+            h.completed_dates = "[]"
+            db.session.commit()
+
+        # Test the route
+        resp = logged_in_client.post(route.format(id=hid), follow_redirects=False)
+        assert resp.status_code == 302
+        assert resp.location == "/habit-tracker"
+
+        # Verify it was marked completed
+        with app.app_context():
+            updated = db.session.get(Habit, hid)
+            dates = json.loads(updated.completed_dates)
+            assert today in dates
+
+
+def test_toggle_aliases_idempotent_already_completed(logged_in_client, app):
+    """Test that calling toggle alias on already-completed habit is idempotent (keeps it completed)."""
+    today = datetime.utcnow().date().isoformat()
+    
+    with app.app_context():
+        habit = Habit(
+            name="Already Completed",
+            completed_dates=json.dumps([today])  # Already completed today
+        )
+        db.session.add(habit)
+        db.session.commit()
+        hid = habit.id
+
+    # Call it again - should remain completed
+    for route in ROUTES:
+        resp = logged_in_client.post(route.format(id=hid), follow_redirects=False)
+        assert resp.status_code == 302
+        
+        with app.app_context():
+            updated = db.session.get(Habit, hid)
+            dates = json.loads(updated.completed_dates)
+            # Should still be completed, and only appear once
+            assert today in dates
+            assert dates.count(today) == 1  # Not duplicated
