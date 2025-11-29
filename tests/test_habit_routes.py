@@ -93,3 +93,46 @@ def test_toggle_completion_habit_not_found(logged_in_client):
     """Test that non-existent habit returns 404."""
     resp = logged_in_client.post("/habit-tracker/toggle/99999")
     assert resp.status_code == 404
+
+
+def test_canonical_toggle_with_empty_string(logged_in_client, app):
+    """Test canonical toggle route with empty string completed_dates."""
+    with app.app_context():
+        habit = Habit(
+            name="Empty String Canonical",
+            completed_dates=""
+        )
+        db.session.add(habit)
+        db.session.commit()
+        hid = habit.id
+
+    resp = logged_in_client.post(f"/habit-tracker/toggle/{hid}")
+    assert resp.status_code == 302
+    
+    with app.app_context():
+        updated = db.session.get(Habit, hid)
+        dates = json.loads(updated.completed_dates or "[]")
+        today = datetime.utcnow().date().isoformat()
+        assert today in dates
+
+
+def test_canonical_toggle_type_error(logged_in_client, app):
+    """Test canonical toggle handles TypeError in JSON parsing."""
+    with app.app_context():
+        habit = Habit(
+            name="Type Error Canonical",
+            completed_dates=456  # Integer to trigger TypeError
+        )
+        db.session.add(habit)
+        db.session.commit()
+        hid = habit.id
+
+    resp = logged_in_client.post(f"/habit-tracker/toggle/{hid}")
+    assert resp.status_code == 302
+    
+    with app.app_context():
+        updated = db.session.get(Habit, hid)
+        dates = json.loads(updated.completed_dates)
+        today = datetime.utcnow().date().isoformat()
+        assert isinstance(dates, list)
+        assert today in dates

@@ -139,3 +139,70 @@ def test_toggle_aliases_idempotent_already_completed(logged_in_client, app):
             # Should still be completed, and only appear once
             assert today in dates
             assert dates.count(today) == 1  # Not duplicated
+
+
+def test_toggle_aliases_marks_new_completion(logged_in_client, app):
+    """Test that marking a fresh habit as completed works correctly."""
+    with app.app_context():
+        habit = Habit(
+            name="Fresh Habit",
+            completed_dates=None  # Start with None, not empty list
+        )
+        db.session.add(habit)
+        db.session.commit()
+        hid = habit.id
+
+    today = datetime.utcnow().date().isoformat()
+    
+    # Mark it completed - test just one route to ensure commit happens
+    resp = logged_in_client.post(f"/toggle-completion/{hid}", follow_redirects=False)
+    assert resp.status_code == 302
+    
+    with app.app_context():
+        updated = db.session.get(Habit, hid)
+        dates = json.loads(updated.completed_dates)
+        assert today in dates
+        assert len(dates) == 1
+
+
+def test_toggle_aliases_empty_string_completed_dates(logged_in_client, app):
+    """Test handling of empty string in completed_dates."""
+    with app.app_context():
+        habit = Habit(
+            name="Empty String",
+            completed_dates=""  # Empty string, not None or "[]"
+        )
+        db.session.add(habit)
+        db.session.commit()
+        hid = habit.id
+
+    resp = logged_in_client.post(f"/toggle-completion/{hid}")
+    assert resp.status_code == 302
+    
+    with app.app_context():
+        updated = db.session.get(Habit, hid)
+        dates = json.loads(updated.completed_dates or "[]")
+        today = datetime.utcnow().date().isoformat()
+        assert today in dates
+
+
+def test_toggle_aliases_type_error_in_json_parse(logged_in_client, app):
+    """Test handling of TypeError during JSON parsing."""
+    with app.app_context():
+        habit = Habit(
+            name="Type Error Test",
+            completed_dates=123  # Integer instead of string - will cause TypeError
+        )
+        db.session.add(habit)
+        db.session.commit()
+        hid = habit.id
+
+    resp = logged_in_client.post(f"/toggle-completion/{hid}")
+    assert resp.status_code == 302
+    
+    with app.app_context():
+        updated = db.session.get(Habit, hid)
+        dates = json.loads(updated.completed_dates)
+        today = datetime.utcnow().date().isoformat()
+        assert isinstance(dates, list)
+        assert today in dates
