@@ -281,7 +281,8 @@
 
         <div class="flex items-center gap-3">
             {% if habits %}
-            <button onclick="openShareModal()"
+            <button onclick="openShareModal()
+                "
                 class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-md hover:shadow-lg">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
@@ -576,15 +577,25 @@
         </div>
 
         {% if habits %}
-            <div class="space-y-3 max-h-96 overflow-y-auto">
+            <!-- ACTIVE HABIT LIST: drag-and-drop target -->
+            <div class="space-y-3 max-h-96 overflow-y-auto" id="habit-list">
                 {% for habit in habits %}
                 <div class="group habit-card p-4 rounded-lg border transition-all duration-200 hover:border-purple-200 hover:bg-gradient-to-r hover:from-purple-50 hover:to-indigo-50"
-     style="{{ habit.category|cat_styles }}">
-
-
+     style="{{ habit.category|cat_styles }}"
+     data-habit-id="{{ habit.id }}"
+     draggable="true">
 
                     <div class="flex items-start justify-between mb-2">
                         <div class="flex items-center gap-2 flex-1">
+                            <!-- Drag handle for reordering -->
+                            <div class="habit-drag-handle cursor-move text-gray-300 hover:text-gray-500 transition-colors"
+                                 title="Drag to reorder"
+                                 data-testid="drag-handle">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                    <path d="M7 4h2v2H7V4zm4 0h2v2h-2V4zM7 9h2v2H7V9zm4 0h2v2h-2V9zm-4 5h2v2H7v-2zm4 0h2v2h-2v-2z" />
+                                </svg>
+                            </div>
+
                             <form method="POST" action="/habit-tracker/toggle/{{ habit.id }}" class="inline">
                                 <button type="submit" class="text-purple-600 hover:text-purple-800 transition-colors">
                                     {% set today = habit.completed_dates|default('[]')|from_json %}
@@ -1739,6 +1750,72 @@ function closeAndComplete(habitId) {
         }, 500);
     }
 }
+</script>
+
+<!-- DRAG & DROP REORDERING -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const list = document.getElementById('habit-list');
+    if (!list) return;
+
+    let draggedEl = null;
+
+    function handleDragStart(e) {
+        draggedEl = this;
+        this.classList.add('opacity-50');
+        e.dataTransfer.effectAllowed = 'move';
+        // Needed for Firefox
+        e.dataTransfer.setData('text/plain', this.dataset.habitId || '');
+    }
+
+    function handleDragEnd() {
+        if (draggedEl) {
+            draggedEl.classList.remove('opacity-50');
+            draggedEl = null;
+            saveNewOrder();
+        }
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        if (!draggedEl || draggedEl === this) return;
+
+        const rect = this.getBoundingClientRect();
+        const offset = e.clientY - rect.top;
+        const halfway = rect.height / 2;
+
+        if (offset < halfway) {
+            list.insertBefore(draggedEl, this);
+        } else {
+            list.insertBefore(draggedEl, this.nextSibling);
+        }
+    }
+
+    function saveNewOrder() {
+        const ids = Array.from(list.querySelectorAll('.habit-card'))
+            .map(card => card.dataset.habitId)
+            .filter(Boolean);
+
+        if (!ids.length) return;
+
+        fetch('/habit-tracker/reorder', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ order: ids })
+        }).catch(err => {
+            console.error('Failed to save new habit order:', err);
+        });
+    }
+
+    const cards = list.querySelectorAll('.habit-card');
+    cards.forEach(card => {
+        card.addEventListener('dragstart', handleDragStart);
+        card.addEventListener('dragend', handleDragEnd);
+        card.addEventListener('dragover', handleDragOver);
+    });
+});
 </script>
 
 {% endblock %}

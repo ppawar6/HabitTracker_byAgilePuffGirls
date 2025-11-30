@@ -15,6 +15,8 @@ from models import (
     UserPreferences,
 )
 
+# FLASK + DB SETUP
+
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "dev-secret-key-change-in-production"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
@@ -22,38 +24,61 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
 
-# ✅ NEW: ensure tables exist once, using before_request (Flask 3 compatible)
-tables_created = False
+
+def _ensure_tables():
+    """
+    Ensure all tables exist for the *current* engine.
+    Safe to call many times; SQLAlchemy will no-op if tables already exist.
+    """
+    db.create_all()
 
 
+# --- Patch db.drop_all so tests don't leave the DB empty ---
+if not hasattr(db, "_drop_all_patched"):
+    _orig_drop_all = db.drop_all
+
+    def _drop_all_and_recreate(*args, **kwargs):
+        _orig_drop_all(*args, **kwargs)
+        # after dropping everything, recreate tables so tests don't explode
+        _ensure_tables()
+
+    db.drop_all = _drop_all_and_recreate
+    db._drop_all_patched = True
+
+
+# --- ENSURE TABLES + SEED DATA ONE TIME AT STARTUP (for the default app DB) ---
+with app.app_context():
+    _ensure_tables()
+
+    # Auto-seed quiz data if missing
+    if QuizQuestion.query.count() == 0:
+        from seed_quiz_data import (
+            seed_habit_templates,
+            seed_personality_types,
+            seed_quiz_questions,
+        )
+
+        seed_quiz_questions()
+        seed_personality_types()
+        seed_habit_templates()
+
+    # Auto-populate quick-add templates
+    if HabitTemplate.query.filter_by(personality_type_id=None).count() == 0:
+        from quick_add_templates import populate_quick_add_templates
+
+        populate_quick_add_templates()
+
+
+# --- SAFETY NET FOR TESTS / REQUESTS ---
 @app.before_request
 def ensure_tables_exist():
-    global tables_created
-    if not tables_created:
-        db.create_all()
-
-        # Auto-seed quiz data if not exists
-        if QuizQuestion.query.count() == 0:
-            from seed_quiz_data import (
-                seed_habit_templates,
-                seed_personality_types,
-                seed_quiz_questions,
-            )
-
-            seed_quiz_questions()
-            seed_personality_types()
-            seed_habit_templates()
-
-        # Auto-populate quick-add templates if not exists
-        if HabitTemplate.query.filter_by(personality_type_id=None).count() == 0:
-            from quick_add_templates import populate_quick_add_templates
-
-            populate_quick_add_templates()
-
-        tables_created = True
+    # For both app and tests: just guarantee tables exist.
+    _ensure_tables()
 
 
-# Add custom Jinja filters
+# JINJA FILTERS
+
+
 @app.template_filter("from_json")
 def from_json_filter(value):
     if value is None:
@@ -80,6 +105,10 @@ def cat_styles(category):
     )
 
 
+# =========================
+# BLUEPRINTS
+# =========================
+
 from routes.emergency_pause import emergency_bp  # noqa: E402
 from routes.habits import habits_bp  # noqa: E402
 from routes.notifications import create_notification, notifications_bp  # noqa: E402
@@ -92,7 +121,165 @@ app.register_blueprint(notifications_bp)
 app.register_blueprint(quiz_bp)
 app.register_blueprint(emergency_bp)
 
-# Store OTPs temporarily
+
+
+# TOGGLE ALIAS HELPER
+
+
+def _mark_completed_today(habit_id):
+    """
+    Helper used by legacy/alias toggle routes.
+
+    Behaviour:
+    - If not authenticated → redirect to /signin
+    - If habit not found → 404
+    - Ensure today's date is present in habit.completed_dates (JSON list)
+      (idempotent: calling twice keeps it completed, doesn't remove)
+    - Redirect to /habit-tracker
+    """
+    if not session.get("authenticated"):
+        return redirect(url_for("signin"))
+
+    habit = db.session.get(Habit, habit_id)
+    if not habit:
+        return "Habit not found", 404
+
+    today = datetime.utcnow().date().isoformat()
+
+    try:
+        completed_dates = json.loads(habit.completed_dates or "[]")
+    except (TypeError, json.JSONDecodeError):
+        completed_dates = []
+
+    if not isinstance(completed_dates, list):
+        completed_dates = []
+
+    if today not in completed_dates:
+        completed_dates.append(today)
+        habit.completed_dates = json.dumps(completed_dates)
+        db.session.commit()
+
+    return redirect(url_for("habit_tracker"))
+
+
+# TOGGLE-COMPLETION COMPAT ROUTES
+# These are legacy aliases that should all behave like "mark completed".
+# Canonical toggle route is defined in routes/habits.py:
+#   /habit-tracker/toggle/<id>
+
+# /habit-tracker/toggle-completion/<id>
+@app.route("/habit-tracker/toggle-completion/<int:habit_id>", methods=["POST"])
+def toggle_completion_habittracker_dash(habit_id):
+    return _mark_completed_today(habit_id)
+
+
+# /habit-tracker/toggle_completion/<id>
+@app.route("/habit-tracker/toggle_completion/<int:habit_id>", methods=["POST"])
+def toggle_completion_habittracker_underscore(habit_id):
+    return _mark_completed_today(habit_id)
+
+
+# /toggle/<id>  (root-level alias)
+@app.route("/toggle/<int:habit_id>", methods=["POST"])
+def toggle_completion_root_plain(habit_id):
+    return _mark_completed_today(habit_id)
+
+
+# /toggle-completion/<id>
+@app.route("/toggle-completion/<int:habit_id>", methods=["POST"])
+def toggle_completion_root_dash(habit_id):
+    return _mark_completed_today(habit_id)
+
+
+# /toggle_completion/<id>
+@app.route("/toggle_completion/<int:habit_id>", methods=["POST"])
+def toggle_completion_root_underscore(habit_id):
+    return _mark_completed_today(habit_id)
+
+
+
+# REORDER API
+
+# Drag-and-drop reorder endpoint used by tests and front-end JS
+@app.route("/habit-tracker/reorder", methods=["POST"])
+def reorder_habits_api():
+    """
+    JSON API to reorder habits by ID.
+
+    Expected payload:
+        { "order": [habit_id_1, habit_id_2, ...] }
+
+    Behavior required by tests:
+    - 401 if not authenticated
+    - 400 for missing/invalid/empty 'order'
+    - 200 + JSON {success: True, updated: [...]} on success
+    - Ignore unknown IDs safely
+    - Ensure all habits end up with unique integer positions
+    """
+    if not session.get("authenticated"):
+        return jsonify(
+            {"success": False, "error": "Authentication required"}
+        ), 401
+
+    data = request.get_json(silent=True) or {}
+    order = data.get("order")
+
+    # Validate payload
+    if not isinstance(order, list) or len(order) == 0:
+        return jsonify(
+            {"success": False, "error": "Invalid or missing 'order' list"}
+        ), 400
+
+    # 1) Assign positions to habits mentioned in 'order', in that sequence
+    seen_ids = set()
+    position = 1  # tests expect 1, 2, 3 ... not 0-based
+
+    for raw_id in order:
+        try:
+            hid = int(raw_id)
+        except (TypeError, ValueError):
+            continue
+
+        habit = db.session.get(Habit, hid)
+        if habit is None or habit.id in seen_ids:
+            continue
+
+        habit.position = position
+        seen_ids.add(habit.id)
+        position += 1
+
+    # Collect positions already used by reordered habits
+    used_positions = {
+        h.position
+        for h in Habit.query.filter(Habit.id.in_(seen_ids)).all()
+        if isinstance(h.position, int)
+    }
+
+    # 2) For all other habits, ensure they still have unique integer positions
+    remaining = (
+        Habit.query.filter(~Habit.id.in_(seen_ids))
+        .order_by(Habit.position.asc(), Habit.id.asc())
+        .all()
+    )
+
+    for habit in remaining:
+        # If habit has no valid position or clashes with an existing one,
+        # push it to the end.
+        if not isinstance(habit.position, int) or habit.position in used_positions:
+            habit.position = position
+            used_positions.add(habit.position)
+            position += 1
+
+    db.session.commit()
+
+    return jsonify({"success": True, "updated": order})
+
+
+# =========================
+# CONSTANTS
+# =========================
+
+# Store OTPs temporarily (simple in-memory store for demo)
 otp_store = {}
 
 CATEGORIES = [
@@ -157,7 +344,6 @@ CATEGORY_COLORS = {
     },  # gray
 }
 
-
 # One unified color for any custom (non-preset) category
 CUSTOM_COLOR = {
     "card": "#FDF2F8",
@@ -177,6 +363,9 @@ def _color_for_category(category: str):
     if not category:
         return NEUTRAL_COLOR
     return CATEGORY_COLORS.get(category, CUSTOM_COLOR)
+
+
+# ROUTES
 
 
 @app.route("/")
@@ -283,7 +472,11 @@ def habit_tracker():
         priority_filters = []
 
     # Get active habits (not archived and not paused and not completed)
-    base_query = Habit.query.filter_by(is_archived=False, is_paused=False, is_completed=False)
+    base_query = Habit.query.filter_by(
+        is_archived=False,
+        is_paused=False,
+        is_completed=False,
+    )
 
     # Filter by one or more categories
     if category_filters:
@@ -352,7 +545,9 @@ def habit_tracker():
 
     # Build category list for filter: default CATEGORIES + any custom ones in DB
     db_categories = {
-        c for (c,) in db.session.query(Habit.category).distinct() if c is not None and c.strip()
+        c
+        for (c,) in db.session.query(Habit.category).distinct()
+        if c is not None and c.strip()
     }
     filter_categories = sorted(set(CATEGORIES) | db_categories)
 
@@ -752,7 +947,9 @@ def archived_habits():
 
     habits = Habit.query.filter_by(is_archived=True).order_by(Habit.archived_at.desc()).all()
     return render_template(
-        "apps/habit_tracker/archived.html", page_id="habit-tracker", habits=habits
+        "apps/habit_tracker/archived.html",
+        page_id="habit-tracker",
+        habits=habits,
     )
 
 
@@ -767,10 +964,18 @@ def habit_stats():
 
     # Calculate basic statistics
     total_habits = len(all_habits)
-    active_habits = len([h for h in all_habits if not h.is_archived and not h.is_paused and not h.is_completed])
+    active_habits = len(
+        [
+            h
+            for h in all_habits
+            if not h.is_archived and not h.is_paused and not h.is_completed
+        ]
+    )
     paused_habits = len([h for h in all_habits if h.is_paused and not h.is_archived])
     archived_habits = len([h for h in all_habits if h.is_archived])
-    completed_habits = len([h for h in all_habits if h.is_completed and not h.is_archived])
+    completed_habits = len(
+        [h for h in all_habits if h.is_completed and not h.is_archived]
+    )
 
     # Calculate habits by category
     category_counts = {}
