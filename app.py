@@ -550,7 +550,7 @@ def habit_tracker():
         if c is not None and c.strip()
     }
     filter_categories = sorted(set(CATEGORIES) | db_categories)
-
+    show_confetti = session.pop("show_confetti", False)
     return render_template(
         "apps/habit_tracker/index.html",
         page_id="habit-tracker",
@@ -563,6 +563,7 @@ def habit_tracker():
         current_categories=category_filters,  # list of selected categories
         current_priorities=priority_filters,  # list of selected priority levels
         search_query=search_query,  # NEW: Pass search query to template
+        show_confetti=show_confetti,
     )
 
 
