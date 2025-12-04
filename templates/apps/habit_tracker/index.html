@@ -262,6 +262,8 @@
 
 
 </style>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
 {% endblock %}
 
 {% block content %}
@@ -1625,6 +1627,49 @@ document.getElementById('customizeModal').addEventListener('click', function(e) 
 </div>
 
 <script>
+function launchConfetti() {
+    if (!window.confetti) return;
+
+    const duration = 2500;
+    const animationEnd = Date.now() + duration;
+    const defaults = { startVelocity: 35, spread: 360, ticks: 60, zIndex: 100000 };
+
+    function randomInRange(min, max) {
+        return Math.random() * (max - min) + min;
+    }
+
+    const interval = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+            return clearInterval(interval);
+        }
+
+        const particleCount = 40 * (timeLeft / duration);
+
+        // Left side
+        confetti({
+            ...defaults,
+            particleCount,
+            origin: {
+                x: randomInRange(0.1, 0.3),
+                y: Math.random() - 0.2
+            }
+        });
+
+        // Right side
+        confetti({
+            ...defaults,
+            particleCount,
+            origin: {
+                x: randomInRange(0.7, 0.9),
+                y: Math.random() - 0.2
+            }
+        });
+    }, 250);
+}
+
+
 // Celebration animation when marking habit as complete
 function showCompletionCelebration(habitId) {
     // Create confetti/celebration overlay
@@ -1709,6 +1754,7 @@ function showCompletionCelebration(habitId) {
     
     document.head.appendChild(style);
     document.body.appendChild(celebration);
+    launchConfetti();
     
     // Add click event listener to the close button
     const closeBtn = document.getElementById('closeBtn' + habitId);
