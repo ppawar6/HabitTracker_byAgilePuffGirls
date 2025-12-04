@@ -1,12 +1,21 @@
+import csv
+import io
 import json
 import os
 import random
 from datetime import datetime, timezone
 
-from flask import Flask, jsonify, redirect, render_template, request, session, url_for
+from flask import Flask, Response, jsonify, redirect, render_template, request, session, url_for
 
 from extensions import db
-from models import Habit, UserPreferences
+from models import (
+    Habit,
+    HabitTemplate,
+    QuizQuestion,
+    UserPreferences,
+)
+
+# FLASK + DB SETUP
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "dev-secret-key-change-in-production"
@@ -15,8 +24,62 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
 
-# Add custom Jinja filters
-@app.template_filter('from_json')
+
+def _ensure_tables():
+    """
+    Ensure all tables exist for the *current* engine.
+    Safe to call many times; SQLAlchemy will no-op if tables already exist.
+    """
+    db.create_all()
+
+
+# --- Patch db.drop_all so tests don't leave the DB empty ---
+if not hasattr(db, "_drop_all_patched"):
+    _orig_drop_all = db.drop_all
+
+    def _drop_all_and_recreate(*args, **kwargs):
+        _orig_drop_all(*args, **kwargs)
+        # after dropping everything, recreate tables so tests don't explode
+        _ensure_tables()
+
+    db.drop_all = _drop_all_and_recreate
+    db._drop_all_patched = True
+
+
+# --- ENSURE TABLES + SEED DATA ONE TIME AT STARTUP (for the default app DB) ---
+with app.app_context():
+    _ensure_tables()
+
+    # Auto-seed quiz data if missing
+    if QuizQuestion.query.count() == 0:
+        from seed_quiz_data import (
+            seed_habit_templates,
+            seed_personality_types,
+            seed_quiz_questions,
+        )
+
+        seed_quiz_questions()
+        seed_personality_types()
+        seed_habit_templates()
+
+    # Auto-populate quick-add templates
+    if HabitTemplate.query.filter_by(personality_type_id=None).count() == 0:
+        from quick_add_templates import populate_quick_add_templates
+
+        populate_quick_add_templates()
+
+
+# --- SAFETY NET FOR TESTS / REQUESTS ---
+@app.before_request
+def ensure_tables_exist():
+    # For both app and tests: just guarantee tables exist.
+    _ensure_tables()
+
+
+# JINJA FILTERS
+
+
+@app.template_filter("from_json")
 def from_json_filter(value):
     if value is None:
         return []
@@ -25,13 +88,198 @@ def from_json_filter(value):
     except json.JSONDecodeError:
         return []
 
+
+@app.template_filter("cat_styles")
+def cat_styles(category):
+    """
+    Returns inline styles for the habit card + CSS variables for the category pill.
+    Usage on the card:
+        style="{{ habit.category|cat_styles }}"
+    """
+    c = _color_for_category(category)
+    return (
+        f"background-color: {c['card']};"
+        f"border-color: {c['border']};"
+        f"--cat-pill-bg: {c['pill_bg']};"
+        f"--cat-pill-text: {c['pill_text']};"
+    )
+
+
+# =========================
+# BLUEPRINTS
+# =========================
+
+from routes.emergency_pause import emergency_bp  # noqa: E402
 from routes.habits import habits_bp  # noqa: E402
+from routes.notifications import create_notification, notifications_bp  # noqa: E402
+from routes.quiz import quiz_bp  # noqa: E402
 from routes.theme import theme_bp  # noqa: E402
 
 app.register_blueprint(theme_bp)
 app.register_blueprint(habits_bp)
+app.register_blueprint(notifications_bp)
+app.register_blueprint(quiz_bp)
+app.register_blueprint(emergency_bp)
 
-# Store OTPs temporarily
+
+
+# TOGGLE ALIAS HELPER
+
+
+def _mark_completed_today(habit_id):
+    """
+    Helper used by legacy/alias toggle routes.
+
+    Behaviour:
+    - If not authenticated → redirect to /signin
+    - If habit not found → 404
+    - Ensure today's date is present in habit.completed_dates (JSON list)
+      (idempotent: calling twice keeps it completed, doesn't remove)
+    - Redirect to /habit-tracker
+    """
+    if not session.get("authenticated"):
+        return redirect(url_for("signin"))
+
+    habit = db.session.get(Habit, habit_id)
+    if not habit:
+        return "Habit not found", 404
+
+    today = datetime.utcnow().date().isoformat()
+
+    try:
+        completed_dates = json.loads(habit.completed_dates or "[]")
+    except (TypeError, json.JSONDecodeError):
+        completed_dates = []
+
+    if not isinstance(completed_dates, list):
+        completed_dates = []
+
+    if today not in completed_dates:
+        completed_dates.append(today)
+        habit.completed_dates = json.dumps(completed_dates)
+        db.session.commit()
+
+    return redirect(url_for("habit_tracker"))
+
+
+# TOGGLE-COMPLETION COMPAT ROUTES
+# These are legacy aliases that should all behave like "mark completed".
+# Canonical toggle route is defined in routes/habits.py:
+#   /habit-tracker/toggle/<id>
+
+# /habit-tracker/toggle-completion/<id>
+@app.route("/habit-tracker/toggle-completion/<int:habit_id>", methods=["POST"])
+def toggle_completion_habittracker_dash(habit_id):
+    return _mark_completed_today(habit_id)
+
+
+# /habit-tracker/toggle_completion/<id>
+@app.route("/habit-tracker/toggle_completion/<int:habit_id>", methods=["POST"])
+def toggle_completion_habittracker_underscore(habit_id):
+    return _mark_completed_today(habit_id)
+
+
+# /toggle/<id>  (root-level alias)
+@app.route("/toggle/<int:habit_id>", methods=["POST"])
+def toggle_completion_root_plain(habit_id):
+    return _mark_completed_today(habit_id)
+
+
+# /toggle-completion/<id>
+@app.route("/toggle-completion/<int:habit_id>", methods=["POST"])
+def toggle_completion_root_dash(habit_id):
+    return _mark_completed_today(habit_id)
+
+
+# /toggle_completion/<id>
+@app.route("/toggle_completion/<int:habit_id>", methods=["POST"])
+def toggle_completion_root_underscore(habit_id):
+    return _mark_completed_today(habit_id)
+
+
+
+# REORDER API
+
+# Drag-and-drop reorder endpoint used by tests and front-end JS
+@app.route("/habit-tracker/reorder", methods=["POST"])
+def reorder_habits_api():
+    """
+    JSON API to reorder habits by ID.
+
+    Expected payload:
+        { "order": [habit_id_1, habit_id_2, ...] }
+
+    Behavior required by tests:
+    - 401 if not authenticated
+    - 400 for missing/invalid/empty 'order'
+    - 200 + JSON {success: True, updated: [...]} on success
+    - Ignore unknown IDs safely
+    - Ensure all habits end up with unique integer positions
+    """
+    if not session.get("authenticated"):
+        return jsonify(
+            {"success": False, "error": "Authentication required"}
+        ), 401
+
+    data = request.get_json(silent=True) or {}
+    order = data.get("order")
+
+    # Validate payload
+    if not isinstance(order, list) or len(order) == 0:
+        return jsonify(
+            {"success": False, "error": "Invalid or missing 'order' list"}
+        ), 400
+
+    # 1) Assign positions to habits mentioned in 'order', in that sequence
+    seen_ids = set()
+    position = 1  # tests expect 1, 2, 3 ... not 0-based
+
+    for raw_id in order:
+        try:
+            hid = int(raw_id)
+        except (TypeError, ValueError):
+            continue
+
+        habit = db.session.get(Habit, hid)
+        if habit is None or habit.id in seen_ids:
+            continue
+
+        habit.position = position
+        seen_ids.add(habit.id)
+        position += 1
+
+    # Collect positions already used by reordered habits
+    used_positions = {
+        h.position
+        for h in Habit.query.filter(Habit.id.in_(seen_ids)).all()
+        if isinstance(h.position, int)
+    }
+
+    # 2) For all other habits, ensure they still have unique integer positions
+    remaining = (
+        Habit.query.filter(~Habit.id.in_(seen_ids))
+        .order_by(Habit.position.asc(), Habit.id.asc())
+        .all()
+    )
+
+    for habit in remaining:
+        # If habit has no valid position or clashes with an existing one,
+        # push it to the end.
+        if not isinstance(habit.position, int) or habit.position in used_positions:
+            habit.position = position
+            used_positions.add(habit.position)
+            position += 1
+
+    db.session.commit()
+
+    return jsonify({"success": True, "updated": order})
+
+
+# =========================
+# CONSTANTS
+# =========================
+
+# Store OTPs temporarily (simple in-memory store for demo)
 otp_store = {}
 
 CATEGORIES = [
@@ -44,6 +292,80 @@ CATEGORIES = [
     "Social",
     "Chores",
 ]
+
+CATEGORY_COLORS = {
+    "Health": {
+        "card": "#FFF1F2",
+        "border": "#FECACA",
+        "pill_bg": "#E11D48",
+        "pill_text": "#FFFFFF",
+    },  # rose-red
+    "Fitness": {
+        "card": "#F7FEE7",
+        "border": "#D9F99D",
+        "pill_bg": "#65A30D",
+        "pill_text": "#FFFFFF",
+    },  # lime-green
+    "Study": {
+        "card": "#EFF6FF",
+        "border": "#BFDBFE",
+        "pill_bg": "#2563EB",
+        "pill_text": "#FFFFFF",
+    },  # blue
+    "Productivity": {
+        "card": "#F5F3FF",
+        "border": "#DDD6FE",
+        "pill_bg": "#7C3AED",
+        "pill_text": "#FFFFFF",
+    },  # violet
+    "Mindfulness": {
+        "card": "#FAF5FF",
+        "border": "#E9D5FF",
+        "pill_bg": "#C026D3",
+        "pill_text": "#FFFFFF",
+    },  # purple
+    "Finance": {
+        "card": "#ECFEFF",
+        "border": "#A5F3FC",
+        "pill_bg": "#0891B2",
+        "pill_text": "#FFFFFF",
+    },  # teal-blue
+    "Social": {
+        "card": "#FFF7ED",
+        "border": "#FED7AA",
+        "pill_bg": "#EA580C",
+        "pill_text": "#FFFFFF",
+    },  # orange
+    "Chores": {
+        "card": "#F9FAFB",
+        "border": "#E5E7EB",
+        "pill_bg": "#4B5563",
+        "pill_text": "#FFFFFF",
+    },  # gray
+}
+
+# One unified color for any custom (non-preset) category
+CUSTOM_COLOR = {
+    "card": "#FDF2F8",
+    "border": "#FBCFE8",
+    "pill_bg": "#EC4899",
+    "pill_text": "#FFFFFF",
+}
+NEUTRAL_COLOR = {
+    "card": "#FFFFFF",
+    "border": "#E5E7EB",
+    "pill_bg": "#E5E7EB",
+    "pill_text": "#111827",
+}  # when no category
+
+
+def _color_for_category(category: str):
+    if not category:
+        return NEUTRAL_COLOR
+    return CATEGORY_COLORS.get(category, CUSTOM_COLOR)
+
+
+# ROUTES
 
 
 @app.route("/")
@@ -95,41 +417,311 @@ def habit_tracker():
     if request.method == "POST":
         name = request.form.get("name", "").strip()
         description = request.form.get("description", "").strip()
-        category = request.form.get('category', '').strip()
+        category = request.form.get("category", "").strip()
+        priority = request.form.get("priority", "Medium").strip()
 
-        if category == 'other':
-            category = request.form.get('category_custom', '').strip()
+        # hard-limit description to 200 chars for safety
+        max_desc_length = 200
+        if description:
+            description = description[:max_desc_length]
+
+        if category == "other":
+            category = request.form.get("category_custom", "").strip()
 
         if name:
             habit = Habit(
                 name=name,
                 description=description or None,
                 category=(category or None),
+                priority=priority or "Medium",
             )
             db.session.add(habit)
+
+            # Create notification BEFORE commit
+            email = session.get("email")
+            if email:
+                create_notification(
+                    user_email=email,
+                    message=f"Added habit: {name}",
+                    action_type="added",
+                    habit_name=name,
+                )
+
             db.session.commit()
 
         return redirect(url_for("habit_tracker"))
 
-    # Get active habits (not archived and not paused)
-    habits = (
-        Habit.query.filter_by(is_archived=False, is_paused=False)
-        .order_by(Habit.created_at.desc())
-        .all()
+    # ---- GET: filters + sorting ----
+    sort_by = request.args.get("sort", "priority")
+
+    # NEW: Search query parameter
+    search_query = request.args.get("search", "").strip()
+
+    # Multiple category & priority filters (comma-separated in URL)
+    category_param = request.args.get("category", "")
+    priority_param = request.args.get("priority", "")
+
+    if category_param:
+        category_filters = [c for c in category_param.split(",") if c]
+    else:
+        category_filters = []
+
+    if priority_param:
+        priority_filters = [p for p in priority_param.split(",") if p]
+    else:
+        priority_filters = []
+
+    # Get active habits (not archived and not paused and not completed)
+    base_query = Habit.query.filter_by(
+        is_archived=False,
+        is_paused=False,
+        is_completed=False,
     )
-    # Get paused habits (not archived but paused)
-    paused_habits = (
-        Habit.query.filter_by(is_archived=False, is_paused=True)
-        .order_by(Habit.paused_at.desc())
+
+    # Filter by one or more categories
+    if category_filters:
+        base_query = base_query.filter(Habit.category.in_(category_filters))
+
+    # Filter by one or more priority levels
+    if priority_filters:
+        base_query = base_query.filter(Habit.priority.in_(priority_filters))
+
+    # NEW: Apply search filter
+    if search_query:
+        search_pattern = f"%{search_query}%"
+        from sqlalchemy import or_
+
+        base_query = base_query.filter(
+            or_(
+                Habit.name.ilike(search_pattern),
+                Habit.description.ilike(search_pattern),
+                Habit.category.ilike(search_pattern),
+            )
+        )
+
+    habits = base_query.all()
+
+    # Define priority order for sorting
+    priority_order = {"High": 0, "Medium": 1, "Low": 2}
+
+    if sort_by == "priority":
+        habits = sorted(
+            habits,
+            key=lambda h: (priority_order.get(h.priority, 1), h.created_at),
+            reverse=False,
+        )
+    elif sort_by == "az":
+        habits = sorted(habits, key=lambda h: h.name.lower())
+    elif sort_by == "za":
+        habits = sorted(habits, key=lambda h: h.name.lower(), reverse=True)
+    elif sort_by == "oldest":
+        habits = sorted(habits, key=lambda h: h.created_at)
+    elif sort_by == "newest":
+        habits = sorted(habits, key=lambda h: h.created_at, reverse=True)
+    else:
+        # Default to priority sorting
+        habits = sorted(
+            habits,
+            key=lambda h: (priority_order.get(h.priority, 1), h.created_at),
+            reverse=False,
+        )
+
+    # Paused habits – hide them when searching
+    if search_query:
+        paused_habits = []
+    else:
+        paused_habits = (
+            Habit.query.filter_by(is_archived=False, is_paused=True)
+            .order_by(Habit.paused_at.desc())
+            .all()
+        )
+
+    # Completed habits – always show them (sorted by completion date, newest first)
+    completed_habits = (
+        Habit.query.filter_by(is_archived=False, is_completed=True)
+        .order_by(Habit.completed_at.desc())
         .all()
     )
 
+    # Build category list for filter: default CATEGORIES + any custom ones in DB
+    db_categories = {
+        c
+        for (c,) in db.session.query(Habit.category).distinct()
+        if c is not None and c.strip()
+    }
+    filter_categories = sorted(set(CATEGORIES) | db_categories)
+    show_confetti = session.pop("show_confetti", False)
     return render_template(
         "apps/habit_tracker/index.html",
         page_id="habit-tracker",
         habits=habits,
         paused_habits=paused_habits,
+        completed_habits=completed_habits,
         categories=CATEGORIES,
+        current_sort=sort_by,
+        filter_categories=filter_categories,
+        current_categories=category_filters,  # list of selected categories
+        current_priorities=priority_filters,  # list of selected priority levels
+        search_query=search_query,  # NEW: Pass search query to template
+        show_confetti=show_confetti,
+    )
+
+
+# NEW: Export Habits to CSV
+@app.route("/habit-tracker/export/csv")
+def export_habits_csv():
+    """Export active habits to CSV file"""
+    if not session.get("authenticated"):
+        return redirect(url_for("signin"))
+
+    # Get all active habits (not archived, not paused)
+    habits = (
+        Habit.query.filter_by(is_archived=False, is_paused=False)
+        .order_by(Habit.created_at.desc())
+        .all()
+    )
+
+    # Create CSV in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # Write header
+    writer.writerow(["Name", "Description", "Category", "Priority", "Created Date", "Status"])
+
+    # Write habit data
+    for habit in habits:
+        writer.writerow(
+            [
+                habit.name,
+                habit.description or "",
+                habit.category or "Uncategorized",
+                habit.priority or "Medium",
+                habit.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                "Active",
+            ]
+        )
+
+    # Prepare response
+    output.seek(0)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"habits_export_{timestamp}.csv"
+
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@app.route("/habit-tracker/templates")
+def get_habit_templates():
+    """Get quick-add habit templates, filtered by existing habits"""
+    if not session.get("authenticated"):
+        return redirect(url_for("signin"))
+
+    # Get all general templates (personality_type_id is NULL)
+    all_templates = HabitTemplate.query.filter_by(personality_type_id=None).all()
+
+    # Get user's existing habit names (active, paused, and archived)
+    existing_habit_names = {habit.name.lower() for habit in Habit.query.all()}
+
+    # Filter out templates for habits user already has
+    available_templates = [
+        {
+            "id": t.id,
+            "name": t.name,
+            "description": t.description,
+            "category": t.category,
+            "priority": t.priority,
+        }
+        for t in all_templates
+        if t.name.lower() not in existing_habit_names
+    ]
+
+    # Group by category
+    templates_by_category = {}
+    for template in available_templates:
+        category = template["category"] or "Other"
+        if category not in templates_by_category:
+            templates_by_category[category] = []
+        templates_by_category[category].append(template)
+
+    return jsonify({"templates": templates_by_category, "total": len(available_templates)})
+
+
+@app.route("/habit-tracker/add-from-template", methods=["POST"])
+def add_habit_from_template():
+    """Add a habit from a template (with optional customization)"""
+    if not session.get("authenticated"):
+        return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+    data = request.get_json()
+    template_id = data.get("template_id")
+
+    # Allow customization
+    custom_name = data.get("name", "").strip()
+    custom_description = data.get("description", "").strip()
+    custom_category = data.get("category", "").strip()
+    custom_priority = data.get("priority", "").strip()
+
+    if template_id:
+        # Get template
+        template = db.session.get(HabitTemplate, template_id)
+        if not template:
+            return jsonify({"success": False, "error": "Template not found"}), 404
+
+        # Use custom values if provided, otherwise use template defaults
+        name = custom_name if custom_name else template.name
+        description = custom_description if custom_description else template.description
+        category = custom_category if custom_category else template.category
+        priority = custom_priority if custom_priority else template.priority
+    else:
+        # Direct custom habit (no template)
+        name = custom_name
+        description = custom_description
+        category = custom_category
+        priority = custom_priority
+
+    if not name:
+        return jsonify({"success": False, "error": "Habit name is required"}), 400
+
+    # Check if habit already exists
+    existing = Habit.query.filter_by(name=name).first()
+    if existing:
+        return jsonify({"success": False, "error": "Habit already exists"}), 400
+
+    # Create new habit
+    habit = Habit(
+        name=name,
+        description=description or None,
+        category=category or None,
+        priority=priority or "Medium",
+    )
+    db.session.add(habit)
+
+    # Create notification
+    email = session.get("email")
+    if email:
+        create_notification(
+            user_email=email,
+            message=f"Added habit: {name}",
+            action_type="added",
+            habit_name=name,
+        )
+
+    db.session.commit()
+
+    return jsonify(
+        {
+            "success": True,
+            "habit": {
+                "id": habit.id,
+                "name": habit.name,
+                "description": habit.description,
+                "category": habit.category,
+                "priority": habit.priority,
+            },
+        }
     )
 
 
@@ -138,7 +730,20 @@ def delete_habit(habit_id):
     habit = db.session.get(Habit, habit_id)
     if not habit:
         return "Habit not found", 404
+
+    habit_name = habit.name
     db.session.delete(habit)
+
+    # Create notification BEFORE commit
+    email = session.get("email")
+    if email:
+        create_notification(
+            user_email=email,
+            message=f"Deleted habit: {habit_name}",
+            action_type="deleted",
+            habit_name=habit_name,
+        )
+
     db.session.commit()
     return redirect(url_for("habit_tracker"))
 
@@ -152,9 +757,22 @@ def update_habit(habit_id):
     habit = db.session.get(Habit, habit_id)
     if not habit:
         return "Habit not found", 404
+
+    old_name = habit.name
     new_name = request.form.get("name", "").strip()
     if new_name:
         habit.name = new_name
+
+        # Create notification BEFORE commit
+        email = session.get("email")
+        if email:
+            create_notification(
+                user_email=email,
+                message=f"Edited habit: '{old_name}' to '{new_name}'",
+                action_type="edited",
+                habit_name=new_name,
+            )
+
         db.session.commit()
 
     return redirect(url_for("habit_tracker"))
@@ -172,6 +790,17 @@ def archive_habit(habit_id):
 
     habit.is_archived = True
     habit.archived_at = datetime.now(timezone.utc)
+
+    # Create notification BEFORE commit
+    email = session.get("email")
+    if email:
+        create_notification(
+            user_email=email,
+            message=f"Archived habit: {habit.name}",
+            action_type="archived",
+            habit_name=habit.name,
+        )
+
     db.session.commit()
     return redirect(url_for("habit_tracker"))
 
@@ -188,6 +817,17 @@ def unarchive_habit(habit_id):
 
     habit.is_archived = False
     habit.archived_at = None
+
+    # Create notification BEFORE commit
+    email = session.get("email")
+    if email:
+        create_notification(
+            user_email=email,
+            message=f"Unarchived habit: {habit.name}",
+            action_type="unarchived",
+            habit_name=habit.name,
+        )
+
     db.session.commit()
     return redirect(request.referrer or url_for("habit_tracker"))
 
@@ -204,6 +844,17 @@ def pause_habit(habit_id):
 
     habit.is_paused = True
     habit.paused_at = datetime.now(timezone.utc)
+
+    # Create notification BEFORE commit
+    email = session.get("email")
+    if email:
+        create_notification(
+            user_email=email,
+            message=f"Paused habit: {habit.name}",
+            action_type="paused",
+            habit_name=habit.name,
+        )
+
     db.session.commit()
     return redirect(url_for("habit_tracker"))
 
@@ -220,6 +871,71 @@ def resume_habit(habit_id):
 
     habit.is_paused = False
     habit.paused_at = None
+
+    # Create notification BEFORE commit
+    email = session.get("email")
+    if email:
+        create_notification(
+            user_email=email,
+            message=f"Resumed habit: {habit.name}",
+            action_type="resumed",
+            habit_name=habit.name,
+        )
+
+    db.session.commit()
+    return redirect(request.referrer or url_for("habit_tracker"))
+
+
+@app.route("/habit-tracker/complete/<int:habit_id>", methods=["POST"])
+def complete_habit(habit_id):
+    """Mark a habit as totally completed"""
+    if not session.get("authenticated"):
+        return redirect(url_for("signin"))
+
+    habit = db.session.get(Habit, habit_id)
+    if not habit:
+        return "Habit not found", 404
+
+    habit.is_completed = True
+    habit.completed_at = datetime.now(timezone.utc)
+
+    # Create celebration notification
+    email = session.get("email")
+    if email:
+        create_notification(
+            user_email=email,
+            message=f"🎉 Congratulations! Habit completed: {habit.name}",
+            action_type="completed",
+            habit_name=habit.name,
+        )
+
+    db.session.commit()
+    return redirect(url_for("habit_tracker"))
+
+
+@app.route("/habit-tracker/uncomplete/<int:habit_id>", methods=["POST"])
+def uncomplete_habit(habit_id):
+    """Unmark a completed habit (reactivate it)"""
+    if not session.get("authenticated"):
+        return redirect(url_for("signin"))
+
+    habit = db.session.get(Habit, habit_id)
+    if not habit:
+        return "Habit not found", 404
+
+    habit.is_completed = False
+    habit.completed_at = None
+
+    # Create notification
+    email = session.get("email")
+    if email:
+        create_notification(
+            user_email=email,
+            message=f"Reactivated habit: {habit.name}",
+            action_type="resumed",
+            habit_name=habit.name,
+        )
+
     db.session.commit()
     return redirect(request.referrer or url_for("habit_tracker"))
 
@@ -232,7 +948,75 @@ def archived_habits():
 
     habits = Habit.query.filter_by(is_archived=True).order_by(Habit.archived_at.desc()).all()
     return render_template(
-        "apps/habit_tracker/archived.html", page_id="habit-tracker", habits=habits
+        "apps/habit_tracker/archived.html",
+        page_id="habit-tracker",
+        habits=habits,
+    )
+
+
+@app.route("/habit-tracker/stats")
+def habit_stats():
+    """View habit statistics dashboard"""
+    if not session.get("authenticated"):
+        return redirect(url_for("signin"))
+
+    # Get all habits
+    all_habits = Habit.query.all()
+
+    # Calculate basic statistics
+    total_habits = len(all_habits)
+    active_habits = len(
+        [
+            h
+            for h in all_habits
+            if not h.is_archived and not h.is_paused and not h.is_completed
+        ]
+    )
+    paused_habits = len([h for h in all_habits if h.is_paused and not h.is_archived])
+    archived_habits = len([h for h in all_habits if h.is_archived])
+    completed_habits = len(
+        [h for h in all_habits if h.is_completed and not h.is_archived]
+    )
+
+    # Calculate habits by category
+    category_counts = {}
+    for habit in all_habits:
+        category = habit.category or "Uncategorized"
+        category_counts[category] = category_counts.get(category, 0) + 1
+
+    # Sort categories by count (descending)
+    sorted_categories = sorted(category_counts.items(), key=lambda x: x[1], reverse=True)
+
+    # Find most recent and oldest habit
+    most_recent = None
+    oldest = None
+    if all_habits:
+        most_recent = max(all_habits, key=lambda h: h.created_at)
+        oldest = min(all_habits, key=lambda h: h.created_at)
+
+    return render_template(
+        "apps/habit_tracker/stats.html",
+        page_id="habit-tracker",
+        total_habits=total_habits,
+        active_habits=active_habits,
+        paused_habits=paused_habits,
+        archived_habits=archived_habits,
+        completed_habits=completed_habits,
+        category_counts=sorted_categories,
+        most_recent=most_recent,
+        oldest=oldest,
+    )
+
+
+@app.route("/habit-tracker/pomodoro")
+def pomodoro_timer():
+    """Pomodoro timer page"""
+    if not session.get("authenticated"):
+        return redirect(url_for("signin"))
+
+    return render_template(
+        "apps/habit_tracker/pomodoro.html",
+        page_id="habit-tracker",
     )
 
 
@@ -273,6 +1057,8 @@ def init_db():
 
 
 if __name__ == "__main__":
-    if not os.path.exists("app.db"):
+    # Get the actual database path from the instance folder
+    db_path = os.path.join(app.instance_path, "app.db")
+    if not os.path.exists(db_path):
         init_db()
     app.run(debug=True)

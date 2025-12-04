@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+
+{% block title %}Habit Statistics • Student Starter Pack{% endblock %}
+
+{% block extra_head %}
+<style>
+    [data-theme="dark"] .bg-white {
+        background-color: var(--bg-primary);
+    }
+
+    [data-theme="dark"] .border-gray-200 {
+        border-color: var(--border-color);
+    }
+
+    [data-theme="dark"] .text-gray-900 {
+        color: var(--text-primary);
+    }
+
+    [data-theme="dark"] .text-gray-600,
+    [data-theme="dark"] .text-gray-500 {
+        color: var(--text-secondary);
+    }
+
+    [data-theme="dark"] .bg-gradient-to-br {
+        background: var(--bg-secondary);
+    }
+
+    [data-theme="dark"] .shadow-lg {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+    }
+
+    .stat-card {
+        transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .category-bar {
+        transition: width 0.3s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold text-gray-900 mb-2">Habit Statistics</h1>
+                    <p class="text-gray-600">Overview of your habit tracking behavior</p>
+                </div>
+                <a href="{{ url_for('habit_tracker') }}" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                    Back to Tracker
+                </a>
+            </div>
+        </div>
+
+        <!-- Summary Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            <!-- Total Habits Card -->
+            <div class="stat-card bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Total Habits</p>
+                        <h3 class="text-4xl font-bold text-purple-600 mt-2">{{ total_habits }}</h3>
+                    </div>
+                    <div class="bg-purple-100 rounded-full p-3">
+                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Habits Card -->
+            <div class="stat-card bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Active Habits</p>
+                        <h3 class="text-4xl font-bold text-green-600 mt-2">{{ active_habits }}</h3>
+                    </div>
+                    <div class="bg-green-100 rounded-full p-3">
+                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Completed Habits Card -->
+            <div class="stat-card bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Completed</p>
+                        <h3 class="text-4xl font-bold text-blue-600 mt-2">{{ completed_habits }}</h3>
+                    </div>
+                    <div class="bg-blue-100 rounded-full p-3">
+                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paused Habits Card -->
+            <div class="stat-card bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Paused Habits</p>
+                        <h3 class="text-4xl font-bold text-yellow-600 mt-2">{{ paused_habits }}</h3>
+                    </div>
+                    <div class="bg-yellow-100 rounded-full p-3">
+                        <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Archived Habits Card -->
+            <div class="stat-card bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Archived Habits</p>
+                        <h3 class="text-4xl font-bold text-gray-600 mt-2">{{ archived_habits }}</h3>
+                    </div>
+                    <div class="bg-gray-100 rounded-full p-3">
+                        <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Statistics and Timeline -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Habits by Category -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Habits by Category</h2>
+
+                {% if category_counts %}
+                    <div class="space-y-4">
+                        {% for category, count in category_counts %}
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-gray-700 font-medium">{{ category }}</span>
+                                    <span class="text-gray-600 text-sm">{{ count }} habit{{ 's' if count != 1 else '' }}</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-3">
+                                    {% set percentage = (count / total_habits * 100) if total_habits > 0 else 0 %}
+                                    <div class="category-bar bg-gradient-to-r from-purple-500 to-indigo-500 h-3 rounded-full" style="width: {{ percentage }}%"></div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-8">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        <p class="mt-4 text-gray-600">No habits yet</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Habit Timeline -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Habit Timeline</h2>
+
+                {% if most_recent or oldest %}
+                    <div class="space-y-6">
+                        <!-- Most Recent Habit -->
+                        {% if most_recent %}
+                            <div class="border-l-4 border-green-500 pl-4">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-green-100 rounded-full p-2">
+                                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-600">Most Recent Habit</p>
+                                        <h3 class="text-lg font-bold text-gray-900 mt-1">{{ most_recent.name }}</h3>
+                                        {% if most_recent.category %}
+                                            <span class="inline-block mt-2 px-3 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
+                                                {{ most_recent.category }}
+                                            </span>
+                                        {% endif %}
+                                        <p class="text-sm text-gray-500 mt-2">
+                                            Created {{ most_recent.created_at.strftime('%B %d, %Y') }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- Oldest Habit -->
+                        {% if oldest %}
+                            <div class="border-l-4 border-blue-500 pl-4">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-blue-100 rounded-full p-2">
+                                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-600">Oldest Habit</p>
+                                        <h3 class="text-lg font-bold text-gray-900 mt-1">{{ oldest.name }}</h3>
+                                        {% if oldest.category %}
+                                            <span class="inline-block mt-2 px-3 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
+                                                {{ oldest.category }}
+                                            </span>
+                                        {% endif %}
+                                        <p class="text-sm text-gray-500 mt-2">
+                                            Created {{ oldest.created_at.strftime('%B %d, %Y') }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- Journey Duration -->
+                        {% if most_recent and oldest and most_recent.id != oldest.id %}
+                            <div class="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg p-4 mt-6">
+                                <div class="flex items-center">
+                                    <svg class="w-6 h-6 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                                    </svg>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-600">Habit Journey</p>
+                                        {% set days_diff = (most_recent.created_at - oldest.created_at).days %}
+                                        <p class="text-lg font-bold text-gray-900">{{ days_diff }} day{{ 's' if days_diff != 1 else '' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-8">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p class="mt-4 text-gray-600">No habits yet</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Insights -->
+        {% if total_habits > 0 %}
+            <div class="mt-8 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl shadow-lg p-6 border border-purple-200">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Quick Insights</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div>
+                            <p class="text-sm text-gray-600">Active Rate</p>
+                            {% set active_rate = (active_habits / total_habits * 100) if total_habits > 0 else 0 %}
+                            <p class="text-lg font-bold text-gray-900">{{ "%.1f"|format(active_rate) }}%</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                        </svg>
+                        <div>
+                            <p class="text-sm text-gray-600">Completed Rate</p>
+                            {% set completed_rate = (completed_habits / total_habits * 100) if total_habits > 0 else 0 %}
+                            <p class="text-lg font-bold text-gray-900">{{ "%.1f"|format(completed_rate) }}%</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-yellow-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div>
+                            <p class="text-sm text-gray-600">Paused Rate</p>
+                            {% set paused_rate = (paused_habits / total_habits * 100) if total_habits > 0 else 0 %}
+                            <p class="text-lg font-bold text-gray-900">{{ "%.1f"|format(paused_rate) }}%</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-indigo-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                        </svg>
+                        <div>
+                            <p class="text-sm text-gray-600">Total Categories</p>
+                            <p class="text-lg font-bold text-gray-900">{{ category_counts|length }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

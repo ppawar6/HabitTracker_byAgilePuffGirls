@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Habit Personality Quiz • Student Starter Pack{% endblock %}
+
+{% block extra_head %}
+<style>
+    [data-theme="dark"] .bg-white {
+        background-color: var(--bg-primary);
+    }
+
+    [data-theme="dark"] .text-gray-900 {
+        color: var(--text-primary);
+    }
+
+    [data-theme="dark"] .text-gray-600,
+    [data-theme="dark"] .text-gray-500 {
+        color: var(--text-secondary);
+    }
+
+    [data-theme="dark"] .border-purple-100 {
+        border-color: rgba(139, 92, 246, 0.3);
+    }
+
+    [data-theme="dark"] .bg-gradient-to-br.from-purple-50.to-indigo-100 {
+        background: linear-gradient(to bottom right, var(--bg-secondary), var(--bg-primary));
+    }
+
+    [data-theme="dark"] .bg-green-100 {
+        background-color: rgba(34, 197, 94, 0.2);
+    }
+
+    [data-theme="dark"] .bg-purple-100 {
+        background-color: rgba(139, 92, 246, 0.2);
+    }
+
+    [data-theme="dark"] .bg-blue-100 {
+        background-color: rgba(59, 130, 246, 0.2);
+    }
+
+    [data-theme="dark"] .bg-gray-50 {
+        background-color: var(--bg-secondary);
+    }
+
+    [data-theme="dark"] .bg-gradient-to-r.from-purple-50.to-indigo-50 {
+        background: var(--bg-secondary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 py-12 px-4">
+    <div class="max-w-3xl mx-auto">
+
+        <!-- Quiz Header -->
+        <div class="text-center mb-8">
+            <div class="inline-block bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full p-4 mb-4">
+                <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                </svg>
+            </div>
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Discover Your Habit Personality</h1>
+            <p class="text-xl text-gray-600">Get personalized habit recommendations tailored just for you</p>
+        </div>
+
+        <!-- Main Card -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 mb-6">
+
+            <!-- What You'll Get Section -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">What You'll Get:</h2>
+                <div class="space-y-4">
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900">Your Personality Profile</h3>
+                            <p class="text-gray-600">Understand your unique habit style and peak productivity times</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900">Personalized Habit Recommendations</h3>
+                            <p class="text-gray-600">Get 3-5 habits scientifically matched to your personality type</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900">Success Insights & Tips</h3>
+                            <p class="text-gray-600">Learn what makes you tick and how to build lasting habits</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz Details -->
+            <div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-6 mb-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-1">Quick & Easy</h3>
+                        <p class="text-gray-600">Just {{ total_questions }} simple questions</p>
+                    </div>
+                    <div class="text-right">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-1">2 Minutes</h3>
+                        <p class="text-gray-600">That's all it takes!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Privacy Note -->
+            <div class="bg-gray-50 rounded-xl p-4 mb-8 flex items-start gap-3">
+                <svg class="w-5 h-5 text-gray-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+                <p class="text-sm text-gray-600">
+                    <strong>Your Privacy:</strong> Your answers are private and only used to provide personalized recommendations. We never share your data.
+                </p>
+            </div>
+
+            <!-- Start Button -->
+            <div class="text-center">
+                <a href="{{ url_for('quiz.question', question_num=1) }}"
+                   class="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-lg font-semibold rounded-xl hover:from-purple-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-200 shadow-lg">
+                    <span>Start Quiz Now</span>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                    </svg>
+                </a>
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="{{ url_for('habit_tracker') }}" class="text-gray-500 hover:text-gray-700 text-sm">
+                    Maybe later, take me back to my habits
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

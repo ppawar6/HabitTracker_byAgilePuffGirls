@@ -4,7 +4,7 @@
 
 {% block extra_head %}
 <style>
-    /* Dark mode adaptations */
+
     [data-theme="dark"] select,
     [data-theme="dark"] input,
     [data-theme="dark"] textarea {
@@ -49,6 +49,77 @@
         background: var(--bg-secondary);
     }
 
+    /* Dark mode overrides for totally-completed section */
+    [data-theme="dark"] .completed-habits-empty {
+        background: linear-gradient(to right, #86efac, #6ee7b7) !important;
+        border-color: #4ade80 !important;
+    }
+
+    [data-theme="dark"] .completed-habits-empty .text-gray-900,
+    [data-theme="dark"] .completed-habits-empty .text-gray-800,
+    [data-theme="dark"] .completed-habits-empty .text-gray-700 {
+        color: #111827 !important;
+    }
+
+    [data-theme="dark"] .completed-habits-empty .bg-green-100 {
+        background-color: #86efac !important;
+    }
+
+    /* Completed Habit Cards - Keep light background with dark text */
+    [data-theme="dark"] .completed-habit-card {
+        background: linear-gradient(to right, #d1fae5, #a7f3d0) !important;
+        border-color: #4ade80 !important;
+    }
+
+    /* Habit name in completed section - black on light green */
+    [data-theme="dark"] .completed-habit-card .habit-name {
+        color: #111827 !important;
+    }
+
+    /* Section header and count - white text on dark background */
+    [data-theme="dark"] .completed-habits-section > div > div > h3 {
+        color: #ffffff !important;
+    }
+    
+    /* Count badge - black text on light background */
+    [data-theme="dark"] .completed-habits-section .habit-count {
+        color: #111827 !important;
+        background-color: #d1fae5 !important;
+    }
+
+    /* ALL badges and text inside completed habit cards - black text */
+    [data-theme="dark"] .completed-habit-card span,
+    [data-theme="dark"] .completed-habit-card p,
+    [data-theme="dark"] .completed-habit-card .text-green-700,
+    [data-theme="dark"] .completed-habit-card .text-green-800,
+    [data-theme="dark"] .completed-habit-card .text-green-900,
+    [data-theme="dark"] .completed-habit-card .text-orange-700,
+    [data-theme="dark"] .completed-habit-card .text-orange-900,
+    [data-theme="dark"] .completed-habit-card .text-gray-500,
+    [data-theme="dark"] .completed-habit-card .text-gray-700,
+    [data-theme="dark"] .completed-habit-card .text-gray-800,
+    [data-theme="dark"] .completed-habit-card .text-gray-900 {
+        color: #111827 !important;
+    }
+
+    /* Force all badge backgrounds to be light */
+    [data-theme="dark"] .completed-habit-card .bg-green-200,
+    [data-theme="dark"] .completed-habit-card .bg-green-300 {
+        background-color: #bbf7d0 !important;
+    }
+
+    [data-theme="dark"] .completed-habit-card .bg-white {
+        background-color: #d1fae5 !important;
+    }
+
+    [data-theme="dark"] .completed-habit-card .bg-orange-100,
+    [data-theme="dark"] .completed-habit-card .bg-orange-200 {
+        background-color: #fed7aa !important;
+    }
+
+
+
+
     [data-theme="dark"] .border-gray-100 {
         border-color: var(--border-color);
     }
@@ -71,7 +142,7 @@
         color: var(--text-secondary);
     }
 
-    /* Dark mode styles for paused habits */
+    /* Dark mode styles for paused section */
     [data-theme="dark"] .text-gray-700 {
         color: var(--text-primary);
     }
@@ -96,6 +167,21 @@
     [data-theme="dark"] .border-yellow-300 {
         border-color: rgba(250, 204, 21, 0.3);
     }
+
+    /* Dark mode for filter panel background + border */
+    [data-theme="dark"] .bg-gray-50 {
+        background-color: var(--bg-secondary);
+    }
+
+    [data-theme="dark"] .border-gray-200 {
+        border-color: var(--border-color);
+    }
+
+    /* Optional: make checkboxes use the accent color in dark mode */
+    [data-theme="dark"] input[type="checkbox"] {
+        accent-color: #a855f7; /* Tailwind purple-500 vibe */
+    }
+
     
     .modal {
         display: none;
@@ -141,7 +227,43 @@
         from { transform: translateY(20px); opacity: 0; }
         to { transform: translateY(0); opacity: 1; }
     }
+
+    /* Dark mode: Keep category colors but ensure text is readable */
+    [data-theme="dark"] .habit-card .text-gray-900,
+    [data-theme="dark"] .habit-card .habit-name-display {
+        color: #111827 !important;
+    }
+
+    [data-theme="dark"] .habit-card .text-gray-700,
+    [data-theme="dark"] .habit-card .text-gray-600,
+    [data-theme="dark"] .habit-card .text-gray-500 {
+        color: #374151 !important;
+    }
+
+    /* Dark mode: Priority badges in template modal */
+    [data-theme="dark"] .modal-content .text-red-700 {
+        color: #fca5a5 !important;
+    }
+    [data-theme="dark"] .modal-content .bg-red-100 {
+        background-color: rgba(185, 28, 28, 0.3) !important;
+    }
+    [data-theme="dark"] .modal-content .text-blue-700 {
+        color: #93c5fd !important;
+    }
+    [data-theme="dark"] .modal-content .bg-blue-100 {
+        background-color: rgba(30, 64, 175, 0.3) !important;
+    }
+    [data-theme="dark"] .modal-content .text-yellow-700 {
+        color: #fde047 !important;
+    }
+    [data-theme="dark"] .modal-content .bg-yellow-100 {
+        background-color: rgba(161, 98, 7, 0.3) !important;
+    }
+
+
 </style>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
 {% endblock %}
 
 {% block content %}
@@ -159,16 +281,26 @@
             </div>
         </div>
 
-        
-        {% if habits %}
-        <button onclick="openShareModal()"
-            class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-md hover:shadow-lg">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
-            </svg>
-            <span class="font-medium">Share Progress</span>
-        </button>
-        {% endif %}
+        <div class="flex items-center gap-3">
+            {% if habits %}
+            <button onclick="openShareModal()
+                "
+                class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-md hover:shadow-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+                </svg>
+                <span class="font-medium">Share Progress</span>
+            </button>
+
+            <!-- Emergency Pause Button -->
+            <button onclick="openEmergencyPauseModal()"
+                class="flex items-center gap-2 px-4 py-2 bg-white border-2 border-red-400 text-red-600 rounded-lg hover:bg-red-50 transition-all duration-200 shadow-md hover:shadow-lg group"
+                title="Emergency Pause - Pause All Habits">
+                <span class="text-2xl group-hover:animate-pulse">🚨</span>
+                <span class="font-semibold">Emergency Pause</span>
+            </button>
+            {% endif %}
+        </div>
     </div>
 </div>
 
@@ -182,11 +314,39 @@
     </div>
 </div>
 
+<div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-6 mb-8 text-white shadow-lg">
+    <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex items-start gap-3">
+            <span class="text-3xl">💡</span>
+            <div>
+                <h3 class="font-bold text-xl mb-1">Discover Your Habit Personality</h3>
+                <p class="text-indigo-100 text-sm">Take our 2-minute quiz to get personalized habit recommendations tailored to your unique style and peak productivity times.</p>
+            </div>
+        </div>
+        <a href="{{ url_for('quiz.start') }}"
+           class="flex-shrink-0 inline-flex items-center gap-2 px-6 py-3 bg-white text-purple-700 rounded-lg hover:bg-indigo-50 transform hover:scale-105 transition-all duration-200 shadow-md font-semibold">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+            </svg>
+            <span>Take Quiz</span>
+        </a>
+    </div>
+</div>
+
 <div class="grid lg:grid-cols-2 gap-8">
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div class="flex items-center gap-2 mb-6">
-            <span class="text-xl">🌿</span>
-            <h3 class="text-lg font-semibold text-gray-900">Plant a New Habit</h3>
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-2">
+                <span class="text-xl">🌿</span>
+                <h3 class="text-lg font-semibold text-gray-900">Plant a New Habit</h3>
+            </div>
+            <button type="button" onclick="openTemplatesModal()"
+                    class="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-indigo-600 hover:to-purple-600 transition-all duration-200 text-sm font-medium shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+                </svg>
+                <span>Quick Add</span>
+            </button>
         </div>
         <form method="POST" action="/habit-tracker" class="space-y-4">
             <div>
@@ -196,10 +356,21 @@
                     placeholder="e.g., Morning Meditation, Daily Reading..." required>
             </div>
             <div>
-                <label for="habit-description" class="block text-sm font-medium text-gray-700 mb-2">Intention</label>
-                <textarea id="habit-description" name="description" rows="3"
+                <label for="habit-description" class="block text-sm font-medium text-gray-700 mb-2">
+                    Intention
+                </label>
+                <textarea
+                    id="habit-description"
+                    name="description"
+                    rows="3"
+                    maxlength="200"
                     class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Why is this habit important to you?"></textarea>
+                    placeholder="Why is this habit important to you?"
+                ></textarea>
+                <div class="flex items-center justify-between mt-1 text-xs text-gray-500">
+                    <span>Max 200 characters</span>
+                    <span id="description-char-count">0 / 200</span>
+                </div>
             </div>
 
             <div>
@@ -231,6 +402,18 @@
             placeholder="e.g., Sleep, Diet, Coding, Language..." />
             </div>
 
+            <div>
+            <label for="habit-priority" class="block text-sm font-medium text-gray-700 mb-2">
+            Priority Level
+            </label>
+            <select id="habit-priority" name="priority"
+            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200">
+            <option value="Medium" selected>Medium</option>
+            <option value="High">High</option>
+            <option value="Low">Low</option>
+            </select>
+            </div>
+
             <button type="submit"
                 class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-lg font-medium hover:from-purple-700 hover:to-indigo-700 transform hover:scale-[1.02] transition-all duration-200 shadow-lg">
                 <span class="flex items-center justify-center gap-2">
@@ -244,28 +427,177 @@
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div class="flex items-center justify-between mb-6">
+        <!-- Header row -->
+        <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-2">
                 <span class="text-xl">📊</span>
                 <h3 class="text-lg font-semibold text-gray-900">Your Progress</h3>
             </div>
             <div class="flex items-center gap-3">
                 {% if habits %}
-                <span class="text-sm text-gray-500">{{ habits|length }} habit{{ 's' if habits|length != 1 else '' }}</span>
+                    <span class="text-sm text-gray-500">
+                        {{ habits|length }} habit{{ 's' if habits|length != 1 else '' }}
+                    </span>
+
+                    <!-- Sort dropdown -->
+                    <div class="relative">
+                        <select id="sortSelect"
+                                onchange="window.location.href='?sort=' + this.value"
+                                class="text-sm px-3 py-1.5 border border-gray-200 rounded-lg bg-white hover:border-purple-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 cursor-pointer appearance-none pr-8">
+                            <option value="priority" {% if current_sort == 'priority' or not current_sort %}selected{% endif %}>Sort: Priority</option>
+                            <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Sort: Newest First</option>
+                            <option value="oldest" {% if current_sort == 'oldest' %}selected{% endif %}>Sort: Oldest First</option>
+                            <option value="az" {% if current_sort == 'az' %}selected{% endif %}>Sort: A-Z</option>
+                            <option value="za" {% if current_sort == 'za' %}selected{% endif %}>Sort: Z-A</option>
+                        </select>
+                        <svg class="w-4 h-4 absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400"
+                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
                 {% endif %}
 
-                <a href="/habit-tracker/archived" class="text-sm text-purple-600 hover:text-purple-700 underline font-medium">
+                <!-- Filter button  -->
+                <button type="button"
+                        onclick="toggleFilterPanel()"
+                        class="flex items-center gap-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-700 bg-white hover:border-purple-300 hover:text-purple-700 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M3 4a1 1 0 011-1h16a1 1 0 01.8 1.6L15 12.25V19a1 1 0 01-1.447.894l-3-1.5A1 1 0 0110 17.5v-5.25L3.2 5.6A1 1 0 013 4z" />
+                    </svg>
+                    <span>Filter</span>
+                </button>
+
+                <a href="/habit-tracker/archived"
+                   class="text-sm text-purple-600 hover:text-purple-700 underline font-medium">
                     View Archived
                 </a>
+
+
+            </div>
+        </div>
+
+        <!-- Search bar on its own row -->
+        {% if habits %}
+        <div class="mb-4">
+            <form method="GET" action="/habit-tracker" class="flex gap-2">
+                <input
+                    type="text"
+                    name="search"
+                    value="{{ search_query or '' }}"
+                    placeholder="🔍 Search habits by name, description, or category..."
+                    class="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                    autocomplete="off">
+                <button type="submit"
+                        class="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-md">
+                    Search
+                </button>
+                {% if search_query %}
+                    <a href="/habit-tracker"
+                       class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all duration-200 font-medium">
+                        Clear
+                    </a>
+                {% endif %}
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- Filter panel: Category + Priority checkboxes -->
+        <div id="filterPanel" class="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50 hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Category filters -->
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Category</h4>
+                    <div class="space-y-1 text-sm text-gray-700">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox"
+                                name="category_filter"
+                                value="all"
+                                {% if not current_categories %}checked{% endif %}>
+                            <span>All categories</span>
+                        </label>
+                        {% for cat in filter_categories %}
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox"
+                                name="category_filter"
+                                value="{{ cat }}"
+                                {% if cat in current_categories %}checked{% endif %}>
+                            <span>{{ cat }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Priority level filters -->
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Priority level</h4>
+                    <div class="space-y-1 text-sm text-gray-700">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox"
+                                name="priority_filter"
+                                value="all"
+                                {% if not current_priorities %}checked{% endif %}>
+                            <span>All priorities</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox"
+                                name="priority_filter"
+                                value="High"
+                                {% if 'High' in current_priorities %}checked{% endif %}>
+                            <span>High</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox"
+                                name="priority_filter"
+                                value="Medium"
+                                {% if 'Medium' in current_priorities %}checked{% endif %}>
+                            <span>Medium</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox"
+                                name="priority_filter"
+                                value="Low"
+                                {% if 'Low' in current_priorities %}checked{% endif %}>
+                            <span>Low</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex items-center justify-end gap-3 md:col-span-2">
+                    <button type="button"
+                            onclick="clearFilters"
+                            class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800">
+                        Clear
+                    </button>
+                    <button type="button"
+                            onclick="applyFilters()"
+                            class="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                        Apply filters
+                    </button>
+                </div>
             </div>
         </div>
 
         {% if habits %}
-            <div class="space-y-3 max-h-96 overflow-y-auto">
+            <!-- ACTIVE HABIT LIST: drag-and-drop target -->
+            <div class="space-y-3 max-h-96 overflow-y-auto" id="habit-list">
                 {% for habit in habits %}
-                <div class="group p-4 rounded-lg border border-gray-100 hover:border-purple-200 hover:bg-gradient-to-r hover:from-purple-50 hover:to-indigo-50 transition-all duration-200">
+                <div class="group habit-card p-4 rounded-lg border transition-all duration-200 hover:border-purple-200 hover:bg-gradient-to-r hover:from-purple-50 hover:to-indigo-50"
+     style="{{ habit.category|cat_styles }}"
+     data-habit-id="{{ habit.id }}"
+     draggable="true">
+
                     <div class="flex items-start justify-between mb-2">
                         <div class="flex items-center gap-2 flex-1">
+                            <!-- Drag handle for reordering -->
+                            <div class="habit-drag-handle cursor-move text-gray-300 hover:text-gray-500 transition-colors"
+                                 title="Drag to reorder"
+                                 data-testid="drag-handle">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                    <path d="M7 4h2v2H7V4zm4 0h2v2h-2V4zM7 9h2v2H7V9zm4 0h2v2h-2V9zm-4 5h2v2H7v-2zm4 0h2v2h-2v-2z" />
+                                </svg>
+                            </div>
+
                             <form method="POST" action="/habit-tracker/toggle/{{ habit.id }}" class="inline">
                                 <button type="submit" class="text-purple-600 hover:text-purple-800 transition-colors">
                                     {% set today = habit.completed_dates|default('[]')|from_json %}
@@ -284,11 +616,10 @@
                             </form>
                         </div>
                         <div class="flex items-center gap-2">
-                            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                            <span class="text-xs text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 px-2.5 py-1 rounded-full font-medium">
                                 {{ habit.created_at.strftime('%b %d') }}
                             </span>
 
-                            
                             <button type="button"
                                 class="text-purple-400 hover:text-purple-600 transition-colors duration-200 opacity-0 group-hover:opacity-100 habit-edit-btn-{{ habit.id }}"
                                 onclick="toggleEditMode({{ habit.id }})"
@@ -314,7 +645,6 @@
                                 </svg>
                             </button>
 
-                            
                             <form method="POST" action="/habit-tracker/pause/{{ habit.id }}" class="inline">
                                 <button type="submit"
                                     class="text-yellow-400 hover:text-yellow-600 transition-colors duration-200 opacity-0 group-hover:opacity-100"
@@ -325,7 +655,6 @@
                                 </button>
                             </form>
 
-                          
                             <form method="POST" action="/habit-tracker/archive/{{ habit.id }}" class="inline">
                                 <button type="submit"
                                     class="text-blue-400 hover:text-blue-600 transition-colors duration-200 opacity-0 group-hover:opacity-100"
@@ -336,7 +665,6 @@
                                 </button>
                             </form>
 
-                            
                             <form method="POST" action="/habit-tracker/delete/{{ habit.id }}" class="inline">
                                 <button type="submit"
                                     class="text-red-400 hover:text-red-600 transition-colors duration-200 opacity-0 group-hover:opacity-100"
@@ -356,8 +684,23 @@
                     {% endif %}
                     <div class="flex gap-3 ml-6">
                         {% if habit.category %}
-                            <span class="inline-flex items-center text-xs font-medium text-purple-700 bg-purple-100 px-3 py-1 rounded-full">
-                            {{ habit.category }}
+  <span class="inline-flex items-center text-xs font-medium px-3 py-1 rounded-full" style="{{ habit.category|cat_styles }} background: var(--cat-pill-bg); color: var(--cat-pill-text);">
+    {{ habit.category }}
+  </span>
+{% endif %}
+
+
+                        {% if habit.priority == 'High' %}
+                            <span class="inline-flex items-center gap-1 text-xs font-medium text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-300 px-3 py-1 rounded-full">
+                            <span class="w-2 h-2 rounded-full bg-red-600 dark:bg-red-400"></span> High Priority
+                            </span>
+                        {% elif habit.priority == 'Low' %}
+                            <span class="inline-flex items-center gap-1 text-xs font-medium text-yellow-700 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-300 px-3 py-1 rounded-full">
+                            <span class="w-2 h-2 rounded-full bg-yellow-600 dark:bg-yellow-400"></span> Low Priority
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 px-3 py-1 rounded-full">
+                            <span class="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400"></span> Medium Priority
                             </span>
                         {% endif %}
 
@@ -367,6 +710,19 @@
                         <span class="inline-flex items-center text-xs font-medium text-green-700 bg-green-100 px-3 py-1 rounded-full">
                             0% this week
                         </span>
+                        
+                        <!-- Mark as Complete Button -->
+                        <form method="POST" action="/habit-tracker/complete/{{ habit.id }}" class="inline" id="completeForm{{ habit.id }}">
+                            <button type="button"
+                                onclick="showCompletionCelebration({{ habit.id }})"
+                                class="inline-flex items-center gap-1 text-xs font-semibold text-white bg-gradient-to-r from-green-500 to-emerald-600 px-3 py-1 rounded-full hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-sm"
+                                title="Mark as Totally Completed">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Complete
+                            </button>
+                        </form>
                     </div>
                 </div>
                 {% endfor %}
@@ -374,15 +730,26 @@
         {% else %}
             <div class="text-center py-12">
                 <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full mb-4">
-                    <span class="text-2xl">🌱</span>
+                    {% if search_query %}
+                        <span class="text-2xl">🔍</span>
+                    {% else %}
+                        <span class="text-2xl">🌱</span>
+                    {% endif %}
                 </div>
-                <p class="text-gray-500 mb-2">No habits yet</p>
-                <p class="text-sm text-gray-400">Plant your first habit seed and watch it grow into a consistent routine.</p>
+                {% if search_query %}
+                    <p class="text-gray-500 mb-2">No habits found</p>
+                    <p class="text-sm text-gray-400">No habits match "{{ search_query }}"</p>
+                    <a href="/habit-tracker" class="inline-block mt-4 text-purple-600 hover:text-purple-700 underline">
+                        Clear search and view all habits
+                    </a>
+                {% else %}
+                    <p class="text-gray-500 mb-2">No habits yet</p>
+                    <p class="text-sm text-gray-400">Plant your first habit seed and watch it grow into a consistent routine.</p>
+                {% endif %}
             </div>
         {% endif %}
     </div>
 </div>
-
 
 {% if paused_habits %}
 <div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -446,13 +813,108 @@
 </div>
 {% endif %}
 
+<!-- Totally Completed Habits Section -->
+{% if completed_habits %}
+<div class="completed-habits-section mt-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border-2 border-gray-100 dark:border-gray-600 p-6">
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-2">
+            <span class="text-2xl">🎉</span>
+            <h3 class="text-xl font-bold text-gray-900">Completed Habits</h3>
+            <span class="habit-count text-sm font-semibold text-gray-900 bg-gray-200 px-3 py-1 rounded-full">({{ completed_habits|length }})</span>
+        </div>
+    </div>
+
+    <div class="space-y-3">
+        {% for habit in completed_habits %}
+        <div class="completed-habit-card group p-4 rounded-lg border border-green-100 dark:border-green-700 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-100 dark:to-emerald-100 hover:border-green-200 dark:hover:border-green-600 hover:from-green-100 hover:to-emerald-100 dark:hover:from-green-200 dark:hover:to-emerald-200 transition-all duration-200">
+            <div class="flex items-start justify-between mb-2">
+                <div class="flex items-center gap-2 flex-1">
+                    <span class="text-2xl">✅</span>
+                    <span class="habit-name font-bold text-xl text-gray-900">{{ habit.name }}</span>
+                    <span class="inline-flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-800 bg-green-200 dark:bg-green-300 px-2 py-1 rounded-full">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        100% Complete
+                    </span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-gray-500 dark:text-gray-800 bg-white dark:bg-green-200 px-2 py-1 rounded-full border border-green-200 dark:border-green-400">
+                        Completed {{ habit.completed_at.strftime('%b %d, %Y') }}
+                    </span>
+
+                    <form method="POST" action="/habit-tracker/uncomplete/{{ habit.id }}" class="inline">
+                        <button type="submit"
+                            class="text-blue-400 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200 opacity-0 group-hover:opacity-100"
+                            title="Restart this habit">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                        </button>
+                    </form>
+
+                    <form method="POST" action="/habit-tracker/delete/{{ habit.id }}" class="inline">
+                        <button type="submit"
+                            class="text-red-400 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200 opacity-0 group-hover:opacity-100"
+                            onclick="return confirm('Are you sure you want to delete this completed habit?');"
+                            title="Delete habit">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% if habit.description %}
+                <p class="text-sm text-gray-700 dark:text-gray-800 ml-8 mb-3 italic border-l-2 border-green-300 dark:border-green-600 pl-3">
+                    {{ habit.description }}
+                </p>
+            {% endif %}
+            <div class="flex flex-wrap gap-2 ml-8">
+                {% if habit.category %}
+                    <span class="inline-flex items-center text-xs font-medium bg-white dark:bg-green-200 border border-green-200 dark:border-green-400 px-2 py-1 rounded-full text-gray-700 dark:text-gray-900">
+                        📁 {{ habit.category }}
+                    </span>
+                {% endif %}
+                
+                {% set completed_dates = habit.completed_dates|default('[]')|from_json %}
+                {% if completed_dates|length > 0 %}
+                    <span class="inline-flex items-center gap-1 text-xs font-medium text-orange-700 dark:text-orange-900 bg-orange-100 dark:bg-orange-200 px-2 py-1 rounded-full border border-orange-200 dark:border-orange-400">
+                        🔥 Final Streak: {{ completed_dates|length }} days
+                    </span>
+                {% endif %}
+                
+                <span class="inline-flex items-center gap-1 text-xs font-semibold text-green-700 dark:text-green-900 bg-green-100 dark:bg-green-300 px-2 py-1 rounded-full border border-green-200 dark:border-green-400">
+                    ✨ 100% Progress
+                </span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<div class="completed-habits-empty mt-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-200 dark:to-emerald-200 rounded-xl shadow-lg border-2 border-green-100 dark:border-green-400 p-8">
+    <div class="text-center">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-300 rounded-full mb-4">
+            <span class="text-4xl">🎯</span>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-3">No Completed Habits Yet</h3>
+        <p class="text-base font-bold text-gray-900 max-w-md mx-auto">
+            Complete your first habit to see it here! You've got this! <span class="text-2xl">💪</span>
+        </p>
+        <p class="text-sm font-bold text-gray-800 mt-3">
+            Keep building consistency and you'll be celebrating soon!
+        </p>
+    </div>
+</div>
+{% endif %}
+
 <div class="mt-8 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-8 text-white">
     <div class="max-w-3xl mx-auto text-center">
         <h3 class="text-2xl font-bold mb-2">Did You Know?</h3>
         <p class="opacity-90">It takes an average of 66 days to form a new habit. Start small, stay consistent, and celebrate your progress!</p>
     </div>
 </div>
-
 
 <div id="shareModal" class="modal">
     <div class="modal-content">
@@ -469,22 +931,32 @@
             <pre id="shareText" class="text-sm text-gray-800 whitespace-pre-wrap font-mono">Loading...</pre>
         </div>
 
-        <div class="flex gap-3">
-            <button onclick="copyToClipboard()"
-                class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 font-medium">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                </svg>
-                <span id="copyButtonText">Copy to Clipboard</span>
-            </button>
+        <div class="flex flex-col gap-3">
+            <!-- Row 1: Copy and Download buttons -->
+            <div class="flex gap-3">
+                <button onclick="copyToClipboard()"
+                    class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 font-medium">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2z"></path>
+                    </svg>
+                    <span id="copyButtonText">Copy to Clipboard</span>
+                </button>
+                <a href="/habit-tracker/export/csv"
+                   class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200 font-medium">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span>Download CSV</span>
+                </a>
+            </div>
+            <!-- Row 2: Close button -->
             <button onclick="closeShareModal()"
-                class="px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all duration-200 font-medium">
+                class="w-full px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all duration-200 font-medium">
                 Close
             </button>
         </div>
     </div>
 </div>
-
 
 <script>
   (function () {
@@ -510,7 +982,6 @@
     toggleCustom();
   })();
 
- 
   function toggleEditMode(habitId) {
     const nameDisplay = document.querySelector('.habit-name-display-' + habitId);
     const editForm = document.querySelector('.habit-edit-form-' + habitId);
@@ -548,7 +1019,6 @@
     editForm.submit();
   }
 </script>
-
 
 <script>
 function openShareModal() {
@@ -601,4 +1071,797 @@ document.getElementById('shareModal').addEventListener('click', function(e) {
     }
 });
 </script>
+
+<!--  Live character counter  -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const descriptionField = document.getElementById('habit-description');
+  const counterSpan = document.getElementById('description-char-count');
+
+  if (!descriptionField || !counterSpan) return;
+
+  const maxLength = parseInt(descriptionField.getAttribute('maxlength') || '200', 10);
+
+  function updateCount() {
+    const length = descriptionField.value.length || 0;
+    counterSpan.textContent = `${length} / ${maxLength}`;
+  }
+
+  descriptionField.addEventListener('input', updateCount);
+
+  // Initialize on load in case of prefilled content
+  updateCount();
+});
+</script>
+
+<script>
+  function toggleFilterPanel() {
+    const panel = document.getElementById('filterPanel');
+    if (!panel) return;
+    panel.classList.toggle('hidden');
+  }
+
+  function applyFilters() {
+    const categoryBoxes = document.querySelectorAll('input[name="category_filter"]:checked');
+    const priorityBoxes = document.querySelectorAll('input[name="priority_filter"]:checked');
+
+    // collect all selected categories except "all"
+    let categories = Array.from(categoryBoxes)
+      .map(b => b.value)
+      .filter(v => v && v !== 'all');
+
+    // collect all selected priorities except "all"
+    let priorities = Array.from(priorityBoxes)
+      .map(b => b.value)
+      .filter(v => v && v !== 'all');
+
+    const url = new URL(window.location.href);
+
+    if (categories.length === 0) {
+      // no specific category => treat as "all"
+      url.searchParams.delete('category');
+    } else {
+      url.searchParams.set('category', categories.join(','));
+    }
+
+    if (priorities.length === 0) {
+      // no specific priority => treat as "all"
+      url.searchParams.delete('priority');
+    } else {
+      url.searchParams.set('priority', priorities.join(','));
+    }
+
+    window.location.href = url.toString();
+  }
+
+  function clearFilters() {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('category');
+    url.searchParams.delete('priority');
+    window.location.href = url.pathname; // reset to defaults
+  }
+
+  // ===== EMERGENCY PAUSE FEATURE =====
+
+  // Check emergency pause status on page load
+  async function checkEmergencyPauseStatus() {
+    console.log('[FRONTEND] Checking emergency pause status on page load');
+
+    try {
+      const response = await fetch('/habit-tracker/emergency/status');
+      const data = await response.json();
+
+      console.log('[FRONTEND] Emergency pause status:', data);
+
+      if (data.is_paused) {
+        console.log('[FRONTEND] Emergency pause is active, showing banner');
+        showPausedBanner(data);
+      } else {
+        console.log('[FRONTEND] No active emergency pause');
+      }
+    } catch (error) {
+      console.error('[FRONTEND] Error checking emergency pause status:', error);
+    }
+  }
+
+  function showPausedBanner(data) {
+    const banner = document.createElement('div');
+    banner.id = 'emergency-pause-banner';
+    banner.className = 'fixed top-0 left-0 right-0 bg-orange-500 text-white py-3 px-4 shadow-lg';
+    banner.style.zIndex = '9999'; // Very high z-index to appear above everything
+    banner.innerHTML = `
+      <div class="container mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">⏸️</span>
+          <div>
+            <strong>Emergency Pause Active</strong>
+            <p class="text-sm text-orange-100">
+              ${data.reason || 'Taking a break'} • ${data.days_remaining} days remaining
+            </p>
+          </div>
+        </div>
+        <button onclick="resumeEmergencyPause()" class="bg-white text-orange-600 px-4 py-2 rounded-lg font-semibold hover:bg-orange-50 transition-colors">
+          Resume Habits
+        </button>
+      </div>
+    `;
+    document.body.prepend(banner);
+
+    // Add padding to body so content doesn't get hidden behind banner
+    document.body.style.paddingTop = '60px';
+  }
+
+  async function openEmergencyPauseModal() {
+    document.getElementById('emergencyPauseModal').classList.remove('hidden');
+  }
+
+  function closeEmergencyPauseModal() {
+    document.getElementById('emergencyPauseModal').classList.add('hidden');
+  }
+
+  async function activateEmergencyPause() {
+    const reason = document.getElementById('pauseReason').value;
+    const durationDays = document.getElementById('pauseDuration').value;
+
+    if (!reason.trim()) {
+      alert('Please provide a reason for the pause');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('reason', reason);
+      formData.append('duration_days', durationDays);
+
+      const response = await fetch('/habit-tracker/emergency/pause', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        closeEmergencyPauseModal();
+        window.location.reload(); // Reload to show paused state
+      } else {
+        alert(data.error || 'Failed to activate emergency pause');
+      }
+    } catch (error) {
+      console.error('Error activating emergency pause:', error);
+      alert('Failed to activate emergency pause');
+    }
+  }
+
+  async function resumeEmergencyPause() {
+    console.log('[FRONTEND] resumeEmergencyPause() called');
+
+    if (!confirm('Are you ready to resume tracking your habits?')) {
+      console.log('[FRONTEND] User cancelled resume');
+      return;
+    }
+
+    console.log('[FRONTEND] Sending POST request to /habit-tracker/emergency/resume');
+
+    try {
+      const response = await fetch('/habit-tracker/emergency/resume', {
+        method: 'POST'
+      });
+
+      console.log('[FRONTEND] Response status:', response.status);
+      const data = await response.json();
+      console.log('[FRONTEND] Response data:', data);
+
+      if (data.success) {
+        console.log('[FRONTEND] Resume successful, reloading page');
+
+        // Remove banner and padding before reload
+        const banner = document.getElementById('emergency-pause-banner');
+        if (banner) {
+          banner.remove();
+        }
+        document.body.style.paddingTop = '0';
+
+        window.location.reload(); // Reload to remove paused state
+      } else {
+        console.error('[FRONTEND] Resume failed:', data.error);
+        alert(data.error || 'Failed to resume');
+      }
+    } catch (error) {
+      console.error('[FRONTEND] Error resuming from emergency pause:', error);
+      alert('Failed to resume');
+    }
+  }
+
+  // Check status on page load
+  window.addEventListener('DOMContentLoaded', checkEmergencyPauseStatus);
+</script>
+
+<!-- Quick Add Templates Modal -->
+<div id="templatesModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 900px; width: 95%; max-height: 90vh; overflow-y: auto;">
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <h3 class="text-2xl font-bold text-theme-primary">Quick Add Habit Templates</h3>
+                <p class="text-sm text-theme-secondary mt-1">Choose from popular habit templates or customize before adding</p>
+            </div>
+            <button onclick="closeTemplatesModal()" class="text-theme-secondary hover:text-theme-primary">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <div id="templatesContent" class="space-y-6">
+            <div class="text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                <p class="mt-2 text-theme-secondary">Loading templates...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Customize Template Modal -->
+<div id="customizeModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-bold text-theme-primary">Customize Habit</h3>
+            <button onclick="closeCustomizeModal()" class="text-theme-secondary hover:text-theme-primary">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-theme-primary mb-2">Habit Name</label>
+                <input type="text" id="customName" class="w-full px-4 py-2 border border-theme rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-theme-primary mb-2">Description</label>
+                <textarea id="customDescription" rows="3" class="w-full px-4 py-2 border border-theme rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"></textarea>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-theme-primary mb-2">Category</label>
+                <select id="customCategory" class="w-full px-4 py-2 border border-theme rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    <option value="Health">Health</option>
+                    <option value="Fitness">Fitness</option>
+                    <option value="Study">Study</option>
+                    <option value="Productivity">Productivity</option>
+                    <option value="Mindfulness">Mindfulness</option>
+                    <option value="Finance">Finance</option>
+                    <option value="Social">Social</option>
+                    <option value="Chores">Chores</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-theme-primary mb-2">Priority</label>
+                <select id="customPriority" class="w-full px-4 py-2 border border-theme rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    <option value="High">High</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="Low">Low</option>
+                </select>
+            </div>
+            
+            <div class="flex gap-3 mt-6">
+                <button onclick="saveCustomHabit()" class="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-lg font-medium hover:from-purple-700 hover:to-indigo-700 transition-all duration-200">
+                    Add Habit
+                </button>
+                <button onclick="closeCustomizeModal()" class="px-6 py-3 border border-theme rounded-lg font-medium text-theme-primary hover:bg-theme-secondary transition-all duration-200">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentTemplateId = null;
+
+// Open templates modal and load templates
+async function openTemplatesModal() {
+    document.getElementById('templatesModal').style.display = 'flex';
+    await loadTemplates();
+}
+
+function closeTemplatesModal() {
+    document.getElementById('templatesModal').style.display = 'none';
+}
+
+// Load templates from backend
+async function loadTemplates() {
+    try {
+        const response = await fetch('/habit-tracker/templates');
+        const data = await response.json();
+        
+        const content = document.getElementById('templatesContent');
+        
+        if (data.total === 0) {
+            content.innerHTML = `
+                <div class="text-center py-8">
+                    <span class="text-4xl">🎉</span>
+                    <p class="mt-4 text-theme-primary font-semibold">You've added all available templates!</p>
+                    <p class="text-sm text-theme-secondary mt-2">Great job building your habits!</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Build HTML for categorized templates
+        let html = '';
+        const categoryIcons = {
+            'Health': '🏥',
+            'Fitness': '💪',
+            'Study': '📚',
+            'Productivity': '⚡',
+            'Mindfulness': '🧘',
+            'Finance': '💰',
+            'Social': '👥',
+            'Chores': '🧹',
+            'Other': '📌'
+        };
+        
+        for (const [category, templates] of Object.entries(data.templates)) {
+            const icon = categoryIcons[category] || '📌';
+            html += `
+                <div>
+                    <h4 class="text-lg font-semibold text-theme-primary mb-3 flex items-center gap-2">
+                        <span>${icon}</span>
+                        <span>${category}</span>
+                        <span class="text-sm text-theme-secondary font-normal">(${templates.length})</span>
+                    </h4>
+                    <div class="grid md:grid-cols-2 gap-3">
+            `;
+            
+            templates.forEach(template => {
+                const priorityColors = {
+                    'High': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+                    'Medium': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+                    'Low': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                };
+                const priorityColor = priorityColors[template.priority] || priorityColors['Medium'];
+                
+                html += `
+                    <div class="border border-theme rounded-lg p-4 bg-theme-secondary hover:shadow-md transition-all duration-200">
+                        <div class="flex justify-between items-start mb-2">
+                            <h5 class="font-semibold text-theme-primary">${template.name}</h5>
+                            <span class="text-xs px-2 py-1 rounded ${priorityColor}">${template.priority}</span>
+                        </div>
+                        <p class="text-sm text-theme-secondary mb-3">${template.description || ''}</p>
+                        <div class="flex gap-2">
+                            <button onclick="addFromTemplate(${template.id})" 
+                                    class="flex-1 bg-purple-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-all duration-200">
+                                Add
+                            </button>
+                            <button onclick="customizeTemplate(${template.id}, '${template.name.replace(/'/g, "\\'")}', '${(template.description || '').replace(/'/g, "\\'")}', '${template.category}', '${template.priority}')" 
+                                    class="px-3 py-2 border border-theme rounded-lg text-sm font-medium text-theme-primary hover:bg-theme-primary hover:text-white transition-all duration-200">
+                                Customize
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                    </div>
+                </div>
+            `;
+        }
+        
+        content.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Error loading templates:', error);
+        document.getElementById('templatesContent').innerHTML = `
+            <div class="text-center py-8 text-red-600">
+                <p>Failed to load templates. Please try again.</p>
+            </div>
+        `;
+    }
+}
+
+// Add habit directly from template
+async function addFromTemplate(templateId) {
+    try {
+        const response = await fetch('/habit-tracker/add-from-template', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({template_id: templateId})
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            closeTemplatesModal();
+            window.location.reload(); // Refresh to show new habit
+        } else {
+            alert(data.error || 'Failed to add habit');
+        }
+    } catch (error) {
+        console.error('Error adding habit:', error);
+        alert('Failed to add habit. Please try again.');
+    }
+}
+
+// Open customize modal
+function customizeTemplate(id, name, description, category, priority) {
+    currentTemplateId = id;
+    document.getElementById('customName').value = name;
+    document.getElementById('customDescription').value = description;
+    document.getElementById('customCategory').value = category;
+    document.getElementById('customPriority').value = priority;
+    
+    document.getElementById('customizeModal').style.display = 'flex';
+}
+
+function closeCustomizeModal() {
+    document.getElementById('customizeModal').style.display = 'none';
+    currentTemplateId = null;
+}
+
+// Save customized habit
+async function saveCustomHabit() {
+    const name = document.getElementById('customName').value.trim();
+    const description = document.getElementById('customDescription').value.trim();
+    const category = document.getElementById('customCategory').value;
+    const priority = document.getElementById('customPriority').value;
+    
+    if (!name) {
+        alert('Please enter a habit name');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/habit-tracker/add-from-template', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                template_id: currentTemplateId,
+                name,
+                description,
+                category,
+                priority
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            closeCustomizeModal();
+            closeTemplatesModal();
+            window.location.reload(); // Refresh to show new habit
+        } else {
+            alert(data.error || 'Failed to add habit');
+        }
+    } catch (error) {
+        console.error('Error adding habit:', error);
+        alert('Failed to add habit. Please try again.');
+    }
+}
+
+// Close modals when clicking outside
+document.getElementById('templatesModal').addEventListener('click', function(e) {
+    if (e.target === this) closeTemplatesModal();
+});
+
+document.getElementById('customizeModal').addEventListener('click', function(e) {
+    if (e.target === this) closeCustomizeModal();
+});
+</script>
+
+<!-- Emergency Pause Modal -->
+<div id="emergencyPauseModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
+    <!-- Header -->
+    <div class="text-center mb-6">
+      <div class="bg-red-100 rounded-full w-20 h-20 mx-auto flex items-center justify-center mb-4">
+        <span class="text-5xl">🚨</span>
+      </div>
+      <h2 class="text-2xl font-bold text-gray-900 mb-2">Emergency Pause</h2>
+      <p class="text-gray-600 text-sm">
+        Life getting overwhelming? It's okay to pause and protect your progress.
+      </p>
+    </div>
+
+    <!-- Form -->
+    <div class="space-y-4">
+      <!-- Reason -->
+      <div>
+        <label for="pauseReason" class="block text-sm font-medium text-gray-700 mb-1">
+          What's happening? <span class="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          id="pauseReason"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+          placeholder="e.g., Moving house, Exam week, Family emergency"
+          required
+        />
+      </div>
+
+      <!-- Duration -->
+      <div>
+        <label for="pauseDuration" class="block text-sm font-medium text-gray-700 mb-1">
+          How long do you need?
+        </label>
+        <select
+          id="pauseDuration"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+        >
+          <option value="3">3 days</option>
+          <option value="5">5 days</option>
+          <option value="7" selected>1 week</option>
+          <option value="14">2 weeks</option>
+          <option value="30">1 month</option>
+        </select>
+      </div>
+
+      <!-- What happens info box -->
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
+        <strong class="text-blue-900">What happens during pause:</strong>
+        <ul class="mt-2 text-blue-800 space-y-1">
+          <li>✓ All habits frozen (not failed)</li>
+          <li>✓ Streaks protected</li>
+          <li>✓ No guilt, no pressure</li>
+          <li>✓ Auto-resume when ready</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex gap-3 mt-6">
+      <button
+        onclick="closeEmergencyPauseModal()"
+        class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-semibold transition-colors"
+      >
+        Cancel
+      </button>
+      <button
+        onclick="activateEmergencyPause()"
+        class="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg hover:from-red-600 hover:to-orange-600 font-semibold shadow-lg transform hover:scale-105 transition-all"
+      >
+        Activate Pause
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function launchConfetti() {
+    if (!window.confetti) return;
+
+    const duration = 2500;
+    const animationEnd = Date.now() + duration;
+    const defaults = { startVelocity: 35, spread: 360, ticks: 60, zIndex: 100000 };
+
+    function randomInRange(min, max) {
+        return Math.random() * (max - min) + min;
+    }
+
+    const interval = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+            return clearInterval(interval);
+        }
+
+        const particleCount = 40 * (timeLeft / duration);
+
+        // Left side
+        confetti({
+            ...defaults,
+            particleCount,
+            origin: {
+                x: randomInRange(0.1, 0.3),
+                y: Math.random() - 0.2
+            }
+        });
+
+        // Right side
+        confetti({
+            ...defaults,
+            particleCount,
+            origin: {
+                x: randomInRange(0.7, 0.9),
+                y: Math.random() - 0.2
+            }
+        });
+    }, 250);
+}
+
+
+// Celebration animation when marking habit as complete
+function showCompletionCelebration(habitId) {
+    // Create confetti/celebration overlay
+    const celebration = document.createElement('div');
+    celebration.className = 'fixed inset-0 flex items-center justify-center';
+    celebration.style.cssText = 'z-index: 99999; background-color: rgba(0, 0, 0, 0.6); pointer-events: auto;';
+    celebration.innerHTML = `
+        <div class="celebration-container" id="celebrationContainer${habitId}">
+            <button id="closeBtn${habitId}" 
+                class="absolute top-4 right-4 text-gray-600 hover:text-gray-900 transition-colors bg-white rounded-full p-2 shadow-lg z-50"
+                aria-label="Close"
+                style="cursor: pointer;">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+            <div class="celebration-text">
+                <span class="text-7xl">👏</span>
+                <span class="text-7xl">🎉</span>
+                <span class="text-7xl">👏</span>
+                <span class="text-7xl">🎊</span>
+                <span class="text-7xl">👏</span>
+            </div>
+            <div class="text-4xl font-bold text-green-600 mt-6 animate-pulse">
+                🏆 Congratulations! 🏆
+            </div>
+            <div class="text-2xl text-gray-800 mt-4 font-semibold">
+                Habit Completed! You did it! 💪
+            </div>
+            <div class="text-base text-gray-600 mt-4 font-bold">
+                ⬆️ Click the X button above to mark as complete ⬆️
+            </div>
+        </div>
+    `;
+    
+    // Add celebration styles
+    const style = document.createElement('style');
+    style.textContent = `
+        .celebration-container {
+            background: white;
+            padding: 3rem 4rem;
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            animation: celebrationPop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            border: 4px solid #10b981;
+            position: relative;
+            z-index: 100000;
+            max-width: 600px;
+        }
+        
+        .celebration-text {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            animation: continuousBounce 1s ease-in-out infinite;
+        }
+        
+        @keyframes celebrationPop {
+            0% {
+                transform: scale(0.3) rotate(-10deg);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.08) rotate(3deg);
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes continuousBounce {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+            }
+            50% {
+                transform: translateY(-20px) scale(1.15);
+            }
+        }
+    `;
+    
+    document.head.appendChild(style);
+    document.body.appendChild(celebration);
+    launchConfetti();
+    
+    // Add click event listener to the close button
+    const closeBtn = document.getElementById('closeBtn' + habitId);
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeAndComplete(habitId);
+        });
+    }
+    
+    // Play sound effect (clap sound)
+    try {
+        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZURE');
+        audio.volume = 0.3;
+        audio.play().catch(e => console.log('Audio play failed:', e));
+    } catch (e) {
+        console.log('Audio creation failed:', e);
+    }
+    
+    // Store celebration element for later removal
+    window.currentCelebration = { element: celebration, style: style };
+    
+    return false; // Prevent form submission
+}
+
+// Close celebration and complete the habit
+function closeAndComplete(habitId) {
+    if (window.currentCelebration) {
+        window.currentCelebration.element.style.opacity = '0';
+        window.currentCelebration.element.style.transition = 'opacity 0.5s';
+        setTimeout(() => {
+            window.currentCelebration.element.remove();
+            window.currentCelebration.style.remove();
+            window.currentCelebration = null;
+            
+            // Now submit the form to actually complete the habit
+            document.getElementById('completeForm' + habitId).submit();
+        }, 500);
+    }
+}
+</script>
+
+<!-- DRAG & DROP REORDERING -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const list = document.getElementById('habit-list');
+    if (!list) return;
+
+    let draggedEl = null;
+
+    function handleDragStart(e) {
+        draggedEl = this;
+        this.classList.add('opacity-50');
+        e.dataTransfer.effectAllowed = 'move';
+        // Needed for Firefox
+        e.dataTransfer.setData('text/plain', this.dataset.habitId || '');
+    }
+
+    function handleDragEnd() {
+        if (draggedEl) {
+            draggedEl.classList.remove('opacity-50');
+            draggedEl = null;
+            saveNewOrder();
+        }
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        if (!draggedEl || draggedEl === this) return;
+
+        const rect = this.getBoundingClientRect();
+        const offset = e.clientY - rect.top;
+        const halfway = rect.height / 2;
+
+        if (offset < halfway) {
+            list.insertBefore(draggedEl, this);
+        } else {
+            list.insertBefore(draggedEl, this.nextSibling);
+        }
+    }
+
+    function saveNewOrder() {
+        const ids = Array.from(list.querySelectorAll('.habit-card'))
+            .map(card => card.dataset.habitId)
+            .filter(Boolean);
+
+        if (!ids.length) return;
+
+        fetch('/habit-tracker/reorder', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ order: ids })
+        }).catch(err => {
+            console.error('Failed to save new habit order:', err);
+        });
+    }
+
+    const cards = list.querySelectorAll('.habit-card');
+    cards.forEach(card => {
+        card.addEventListener('dragstart', handleDragStart);
+        card.addEventListener('dragend', handleDragEnd);
+        card.addEventListener('dragover', handleDragOver);
+    });
+});
+</script>
+
 {% endblock %}

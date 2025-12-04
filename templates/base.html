@@ -6,6 +6,7 @@
     <title>{% block title %}Habit Tracker{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script>
         // Apply theme immediately to prevent flash
         const savedTheme = localStorage.getItem('theme') || 'light';
@@ -143,10 +144,45 @@
         input:checked + .toggle-slider:before {
             transform: translateX(26px);
         }
+                /* Offline banner theming */
+        #offlineBanner {
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+
+        [data-theme="dark"] #offlineBanner {
+            background-color: #b91c1c;
+            color: #fef2f2;
+        }
+
+        [data-theme="dark"] #offlineBanner button {
+            background-color: #fef2f2;
+            color: #b91c1c;
+        }
+
     </style>
     {% block extra_head %}{% endblock %}
 </head>
 <body class="min-h-screen bg-theme-primary flex flex-col transition-colors duration-200">
+    <div id="offlineBanner"
+         class="hidden fixed top-0 left-0 right-0 bg-red-500 text-white py-3 px-4 shadow-lg"
+         style="z-index: 9999;">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">⚠️</span>
+                <div>
+                    <p class="font-semibold">You’re offline</p>
+                    <p class="text-sm text-red-100">
+                        Please check your internet connection to sync your latest changes.
+                    </p>
+                </div>
+            </div>
+            <button type="button"
+                    onclick="dismissOfflineBanner()"
+                    class="text-xs sm:text-sm font-medium bg-white text-red-600 px-3 py-1.5 rounded-lg hover:bg-red-50">
+                Dismiss
+            </button>
+        </div>
+    </div>
     <nav class="bg-theme-primary backdrop-blur-md shadow-sm border-b border-theme sticky top-0 z-50 transition-colors duration-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
@@ -157,8 +193,56 @@
                     </a>
                 </div>
                 <div class="flex items-center gap-4">
-                    <button onclick="openSettings()" 
-                            class="p-2 rounded-lg bg-theme-secondary hover:opacity-80 transition-colors" 
+
+                    <!-- Pomodoro Timer (only show when authenticated AND not on signin page) -->
+                    {% if session.get('authenticated') and request.endpoint != 'signin' %}
+                    <a href="{{ url_for('pomodoro_timer') }}"
+                    class="flex items-center gap-2 px-4 py-2 rounded-xl
+                            bg-theme-secondary hover:opacity-80 transition-colors shadow-sm border border-theme"
+                    title="Pomodoro Timer">
+
+                        <svg class="w-5 h-5 text-theme-primary"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m4-3a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+
+                        <span class="text-sm font-medium text-theme-primary">
+                            Pomodoro Timer
+                        </span>
+                    </a>
+                    {% endif %}
+
+
+
+
+                    <!-- Statistics Link (only show when authenticated AND not on signin page) -->
+                    {% if session.get('authenticated') and request.endpoint != 'signin' %}
+                    <a href="{{ url_for('habit_stats') }}"
+                       class="p-2 rounded-lg bg-theme-secondary hover:opacity-80 transition-colors"
+                       title="Statistics">
+                        <svg class="w-6 h-6 text-theme-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </a>
+                    {% endif %}
+
+                    <!-- Notification Bell Icon (only show when authenticated AND not on signin page) -->
+                    {% if session.get('authenticated') and request.endpoint != 'signin' %}
+                    <button onclick="toggleNotifications()"
+                            class="p-2 rounded-lg bg-theme-secondary hover:opacity-80 transition-colors relative"
+                            title="Notifications"
+                            id="notificationBell">
+                        <svg class="w-6 h-6 text-theme-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                        </svg>
+                        <!-- Notification Count Badge -->
+                        <span id="notificationCount" class="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+                    </button>
+                    {% endif %}
+
+                    <button onclick="openSettings()"
+                            class="p-2 rounded-lg bg-theme-secondary hover:opacity-80 transition-colors"
                             title="Settings">
                         <svg class="w-6 h-6 text-theme-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
@@ -295,6 +379,31 @@
         </div>
     </footer>
 
+    <!-- Notification Panel -->
+    <div id="notificationPanel" class="settings-modal">
+        <div class="settings-content shadow-xl max-h-[80vh] overflow-hidden flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-theme-primary">Notifications</h3>
+                <button onclick="closeNotifications()" class="text-theme-secondary hover:text-theme-primary">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="flex justify-between items-center mb-4">
+                <p class="text-sm text-theme-secondary">Your habit activity updates</p>
+                <button onclick="markAllAsRead()" class="text-xs text-blue-600 hover:text-blue-700 font-medium">
+                    Mark all as read
+                </button>
+            </div>
+            
+            <div id="notificationList" class="space-y-2 overflow-y-auto flex-1 pr-2">
+                <p class="text-sm text-theme-secondary text-center py-4">Loading notifications...</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Settings Modal -->
     <div id="settingsModal" class="settings-modal">
         <div class="settings-content shadow-xl">
@@ -317,6 +426,33 @@
                         <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()">
                         <span class="toggle-slider"></span>
                     </label>
+                </div>
+
+                <div class="border-t border-theme pt-6"></div>
+
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="font-medium text-theme-primary">Push Notifications</h4>
+                        <p class="text-sm text-theme-secondary">Get notified when you add, edit, delete, pause, or archive habits</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="notificationsToggle" onchange="toggleNotificationsEnabled()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="border-t border-theme pt-6"></div>
+
+                <div class="flex flex-col gap-3">
+                    <a href="/logout"
+                    onclick="handleLogout()"
+                       class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-all duration-200 shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                        <span>Logout</span>
+                    </a>
+                    <p class="text-xs text-center text-theme-secondary">End your session securely</p>
                 </div>
             </div>
         </div>
@@ -389,6 +525,7 @@
         function openSettings() {
             document.getElementById('settingsModal').classList.add('active');
             loadThemePreference(); // Sync theme state
+            loadNotificationPreference(); // Sync notification state
         }
 
         function closeSettings() {
@@ -400,13 +537,262 @@
             if (e.target === this) closeSettings();
         });
 
+        // Notification management
+        let notificationsData = [];
+
+        async function loadNotifications() {
+            try {
+                const response = await fetch('/notifications');
+                if (!response.ok) return;
+                
+                const data = await response.json();
+                notificationsData = data.notifications;
+                updateNotificationUI(data.notifications, data.unread_count);
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+            }
+        }
+
+        function updateNotificationUI(notifications, unreadCount) {
+            // Update badge count
+            const badge = document.getElementById('notificationCount');
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            // Update notification list
+            const listContainer = document.getElementById('notificationList');
+            if (notifications.length === 0) {
+                listContainer.innerHTML = '<p class="text-sm text-center py-8 text-gray-600 dark:text-gray-400">No notifications yet</p>';
+                return;
+            }
+
+            // Check if dark mode is active
+            const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+            
+            listContainer.innerHTML = notifications.map(notif => {
+                const date = new Date(notif.created_at);
+                const timeAgo = getTimeAgo(date);
+                const isUnread = !notif.is_read;
+                
+                // Choose colors based on theme and read status
+                let bgColor, borderColor, textColor, timeColor;
+                if (isDarkMode) {
+                    if (isUnread) {
+                        bgColor = 'bg-blue-900/30';
+                        borderColor = 'border-blue-700';
+                        textColor = 'text-white';
+                        timeColor = 'text-gray-300';
+                    } else {
+                        bgColor = 'bg-gray-700';
+                        borderColor = 'border-gray-600';
+                        textColor = 'text-gray-100';
+                        timeColor = 'text-gray-400';
+                    }
+                } else {
+                    if (isUnread) {
+                        bgColor = 'bg-blue-50';
+                        borderColor = 'border-blue-300';
+                        textColor = 'text-gray-900';
+                        timeColor = 'text-gray-600';
+                    } else {
+                        bgColor = 'bg-white';
+                        borderColor = 'border-gray-200';
+                        textColor = 'text-gray-800';
+                        timeColor = 'text-gray-500';
+                    }
+                }
+                
+                return `
+                    <div class="p-3 rounded-lg ${bgColor} border-2 ${borderColor} hover:opacity-90 transition-all cursor-pointer"
+                         onclick="markNotificationAsRead(${notif.id})">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-lg">${getActionIcon(notif.action_type)}</span>
+                                    ${isUnread ? '<span class="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></span>' : ''}
+                                </div>
+                                <p class="text-sm font-semibold break-words ${textColor}">${notif.message}</p>
+                                <p class="text-xs mt-1 ${timeColor}">${timeAgo}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getActionIcon(actionType) {
+            const icons = {
+                'added': '➕',
+                'deleted': '🗑️',
+                'paused': '⏸️',
+                'resumed': '▶️',
+                'archived': '📦',
+                'unarchived': '📤',
+                'edited': '✏️'
+            };
+            return icons[actionType] || '📌';
+        }
+
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            
+            if (seconds < 60) return 'Just now';
+            if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+            if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+            if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+            return date.toLocaleDateString();
+        }
+
+        function toggleNotifications() {
+            const panel = document.getElementById('notificationPanel');
+            if (panel.classList.contains('active')) {
+                closeNotifications();
+            } else {
+                panel.classList.add('active');
+                loadNotifications();
+            }
+        }
+
+        function closeNotifications() {
+            document.getElementById('notificationPanel').classList.remove('active');
+        }
+
+        async function markNotificationAsRead(notificationId) {
+            try {
+                await fetch(`/notifications/${notificationId}/read`, { method: 'POST' });
+                loadNotifications(); // Refresh
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+            }
+        }
+
+        async function markAllAsRead() {
+            try {
+                await fetch('/notifications/read-all', { method: 'POST' });
+                loadNotifications(); // Refresh
+            } catch (error) {
+                console.error('Error marking all notifications as read:', error);
+            }
+        }
+
+        async function toggleNotificationsEnabled() {
+            const checkbox = document.getElementById('notificationsToggle');
+            const originalState = checkbox.checked;
+            
+            try {
+                const response = await fetch('/notifications/toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    checkbox.checked = data.notifications_enabled;
+                    console.log('Notifications toggled:', data.notifications_enabled);
+                } else {
+                    console.error('Failed to toggle notifications');
+                    checkbox.checked = originalState; // Revert to original
+                }
+            } catch (error) {
+                console.error('Error toggling notifications:', error);
+                checkbox.checked = originalState; // Revert to original
+            }
+        }
+
+        async function loadNotificationPreference() {
+            try {
+                const response = await fetch('/notifications/settings');
+                if (response.ok) {
+                    const data = await response.json();
+                    const checkbox = document.getElementById('notificationsToggle');
+                    checkbox.checked = data.notifications_enabled;
+                    console.log('Loaded notification preference:', data.notifications_enabled);
+                } else {
+                    console.error('Failed to load notification preference');
+                }
+            } catch (error) {
+                console.error('Error loading notification preference:', error);
+                // Default to true if there's an error
+                document.getElementById('notificationsToggle').checked = true;
+            }
+        }
+
+        // Close notification panel when clicking outside
+        document.getElementById('notificationPanel').addEventListener('click', function(e) {
+            if (e.target === this) closeNotifications();
+        });
+
         // Initialize theme
         loadThemePreference();
+
+        // Load notifications on page load if authenticated
+        {% if session.get('authenticated') %}
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNotifications();
+            // Refresh notification count every 30 seconds
+            setInterval(loadNotifications, 30000);
+        });
+        {% endif %}
 
         // Keep theme in sync across tabs
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) loadThemePreference();
         });
+
+        // Keep theme in sync across tabs
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) loadThemePreference();
+        });
+
+        // ===== Offline / Online banner =====
+        const offlineBanner = document.getElementById('offlineBanner');
+
+        function showOfflineBanner() {
+            if (!offlineBanner) return;
+            offlineBanner.classList.remove('hidden');
+            document.body.style.paddingTop = '60px';
+        }
+
+        function hideOfflineBanner() {
+            if (!offlineBanner) return;
+            offlineBanner.classList.add('hidden');
+            document.body.style.paddingTop = '0px';
+        }
+
+        function dismissOfflineBanner() {
+            hideOfflineBanner();
+        }
+
+        window.addEventListener('offline', () => {
+            console.log('[OFFLINE] Browser lost connection');
+            showOfflineBanner();
+        });
+
+        window.addEventListener('online', () => {
+            console.log('[ONLINE] Connection restored');
+            hideOfflineBanner();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!navigator.onLine) {
+                showOfflineBanner();
+            }
+        });
+
+                // Clear certain localStorage keys on logout
+        function handleLogout() {
+            try {
+                // Reset Pomodoro info popup so it shows next login
+                localStorage.removeItem("pomodoroInfoSeen");
+            } catch (e) {
+                console.error("Error clearing Pomodoro info flag on logout:", e);
+            }
+        }
+
     </script>
 </body>
 </html>
